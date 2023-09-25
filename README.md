@@ -1,2 +1,2 @@
 # marine_acoustics
-Marine Acoustics 4YP
+A 4th year engineering project: applied machine learning for bioacoustics.
