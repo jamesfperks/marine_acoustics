@@ -7,6 +7,26 @@ from sklearn.ensemble import GradientBoostingClassifier
 from playsound import playsound
 
 
+"""Detect Southern Right Whale Vocalisations."""
+
+
+# CONSTANTS
+# ----------------------------------------------------------------------------
+DATA_FILEPATH = '../data/Moby_non_toothed/SouthernRightWhale001-v1'
+FILE_SPLIT = (3,1,1)    # Number of train/val/test files
+SR = 8000               # Sample rate in samples/sec
+FRAME_DURATION = 100    # Frame duration in milliseconds
+FRAME_OVERLAP = 50      # Frame overlap (%)
+N_MFCC = 3              # no. of mfccs to calculate
+
+
+# ----------------------------------------------------------------------------
+# RUNTIME CONSTANTS (DO NOT CHANGE)
+FRAME_LENGTH = SR * FRAME_DURATION // 1000   # frame size in samples
+HOP_LENGTH = FRAME_LENGTH * FRAME_OVERLAP // 100   # stride length in samples
+# ----------------------------------------------------------------------------
+
+
 def get_files():
     """
     Find all .wav and log files and return as a list of tuples:
@@ -308,67 +328,63 @@ def play_audio(y, sr):
    
 
 def train_classifier(X_train, y_train):
-    """Train classifier"""
-    GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    """Train classifier.
+    
+    Note from sklearn:
+    All decision trees use np.float32 arrays internally.
+    If training data is not in this format, a copy of the dataset will be made.
+    """
+    
+    clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
                                      max_depth=1, random_state=0).fit(X_train, y_train)
     
     return clf
 
 
-def get_test_results(X_test, y_test):
+def get_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test):
     
-    print('\n' + '-'*40 + f'\nClassfier Score: {clf.score(X_test, y_test)}'
-          '\n' + '-'*40)
+    train_score = clf.score(X_train, y_train)
+    val_score = clf.score(X_val, y_val)
+    test_score = clf.score(X_test, y_test)
+    
+    
+    print('\n' + '-'*40 + '\nClassifier Scores:\n' + '-'*40)
+    print(f'\nTraining: {train_score}\n\nValidation: {val_score}\n\n'
+          f'Testing: {test_score}')
 
 
+def main():
+
+    # Start of script
+    print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
 
 
-# MAIN SCRIPT
-# ------------------------------------------------------------------
+    # Read in files
+    files = get_files()
+    train_files, val_files, test_files = split_files(files)
 
 
-# CONSTANTS
-# ------------------------------------------------------------------
-DATA_FILEPATH = '../data/Moby_non_toothed/SouthernRightWhale001-v1'
-FILE_SPLIT = (3,1,1)    # Number of train/val/test files
-SR = 8000               # Sample rate in samples/sec
-FRAME_DURATION = 100    # Frame duration in milliseconds
-FRAME_OVERLAP = 50      # Frame overlap (%)
-N_MFCC = 3             # no. of mfccs to calculate
+    # Create train/val/test samples
+    X_train, y_train = extract_samples(train_files)
+    X_val, y_val = extract_samples(val_files)
+    X_test, y_test = extract_samples(test_files)
 
 
-# CALCULATED CONSTANTS (DO NOT CHANGE)
-FRAME_LENGTH = SR * FRAME_DURATION // 1000   # frame size in samples
-HOP_LENGTH = FRAME_LENGTH * FRAME_OVERLAP // 100   # stride length between frames in samples
+    # Train model
+    clf = train_classifier(X_train, y_train)
 
 
-
-# Script
-# This will go inside main() later...
-# ------------------------------------------------------------------
-print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
+    # Results
+    get_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
 
 
-# Read in files
-files = get_files()
-train_files, val_files, test_files = split_files(files)
-
-# Create train/val/test samples
-X_train, y_train = extract_samples(train_files)
-X_val, y_val = extract_samples(val_files)
-X_test, y_test = extract_samples(test_files)
+    # End of script
+    print('\nEnd' + '-'*40)
 
 
-# Train model
-clf = train_classifier(X_train, y_train)
+if __name__ == '__main__':
+    main()
 
-
-# Test model
-get_test_results(X_test, y_test)
-
-
-# End of script
-print('\nEnd' + '-'*40)
 
 
  
