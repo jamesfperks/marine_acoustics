@@ -3,6 +3,7 @@ import os
 import librosa
 import numpy as np
 import scipy.io.wavfile
+from sklearn.ensemble import GradientBoostingClassifier
 from playsound import playsound
 
 
@@ -72,7 +73,6 @@ def print_files(fileset):
 def extract_samples(fileset):
     """Extract feature vector X and labels y from a given fileset"""
     
-    print('\nExtracting samples...\n')
     
     """
 	1. combine whale sections and noise sections for all recordings
@@ -83,14 +83,21 @@ def extract_samples(fileset):
 	3. Stack all feature vectors from each section per class
     
     
-    Test:
-    
-    Should have same no. of frames but with row size of N_MFCC
+    Test files results:
+        
+    Using slice_data to generate frames gives
     Whale frames: (505, 800)
     Noise frames: (6430, 800)
     
+    Feature vector Should have same no. of frames but with row size of N_MFCC.
+    Instead, gives:
+        
+    Whale features: (541, 3)
+    Noise features: (6466, 3)
     
-    ALSO CHECK THAT ZERO SECTION DATA IS FIXED...
+    CHECK WHY THIS IS...
+    
+    CHECK THAT ZERO SECTION DATA IS FIXED...
     i.e. the fact that some sections are empty lists [] due to dodgy
     log values does not matter
     
@@ -103,22 +110,35 @@ def extract_samples(fileset):
     
     for log_filename, wav_filename in fileset:
         whale_sections, noise_sections = separate_class_data(log_filename, wav_filename)
-        print(len(whale_sections))
         all_whale_sections.extend(whale_sections)
         all_noise_sections.extend(noise_sections)
-        
-        #whale_features_per_section = extract_features()
-        
-    print(len(all_whale_sections))
+                
     
-    # 2. Improve
+    # 2. and 3. Improve this...
     
-    all_whale_features = np.vstack(tuple(extract_features(section) for section in all_whale_sections))
-    all_noise_features = np.vstack(tuple(extract_features(section) for section in all_noise_sections))
+    all_whale_features = np.vstack(tuple(extract_features(section) for section in all_whale_sections if section.size > 0))
+    all_noise_features = np.vstack(tuple(extract_features(section) for section in all_noise_sections if section.size > 0))
     
     
-    print(all_whale_features.shape)
-    print(all_noise_features.shape)
+    #all_whale_frames = np.vstack(tuple(slice_data(section) for section in all_whale_sections if section.size > 0))
+    #all_noise_frames = np.vstack(tuple(slice_data(section) for section in all_noise_sections if section.size > 0))
+    
+    #print(all_whale_features.shape)
+    #print(all_noise_features.shape)
+    #print(all_whale_frames.shape)
+    #print(all_noise_frames.shape)
+    
+    labelled_whale_features = np.c_[all_whale_features, np.ones(all_whale_features.shape[0])]
+    labelled_noise_features = np.c_[all_noise_features, np.zeros(all_noise_features.shape[0])]
+    
+    all_samples = np.vstack((labelled_whale_features, labelled_noise_features))
+    
+    np.random.shuffle(all_samples)
+    
+    X = all_samples[:,0:N_MFCC]
+    
+    y = all_samples[:,-1]
+
     
     
     """
@@ -138,9 +158,6 @@ def extract_samples(fileset):
     print(all_noise_frames.shape)
     """
     
-
-    X = None
-    y = None
     return X, y
 
 
@@ -191,7 +208,6 @@ def calculate_mfccs(y):
     #print(f'First {N_MFCC} MFCCs:\n' + '-'*40 + f'\n{mfccs[:,0]}')
     
     return mfccs
-
 
 
 def get_time_log(log_filename):
@@ -281,14 +297,29 @@ def slice_data(data):    # Legacy?
 def play_audio(y, sr):
     """Play audio given sample data and sampling rate"""
     
+    # Possibly use playsound==1.2.2 to resolve relative path issue?
+    
     scipy.io.wavfile.write('sample.wav', SR, y)
     sample_audio_filepath = os.getcwd() + '\sample.wav'
     
     print('\nPlaying sample .wav file...')
     playsound(sample_audio_filepath)
     print('\nAudio finished.\n')
+   
+
+def train_classifier(X_train, y_train):
+    """Train classifier"""
+    GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+                                     max_depth=1, random_state=0).fit(X_train, y_train)
     
-    # Possibly use playsound==1.2.2 to resolve relative path issue?
+    return clf
+
+
+def get_test_results(X_test, y_test):
+    
+    print('\n' + '-'*40 + f'\nClassfier Score: {clf.score(X_test, y_test)}'
+          '\n' + '-'*40)
+
 
 
 
@@ -323,12 +354,17 @@ files = get_files()
 train_files, val_files, test_files = split_files(files)
 
 # Create train/val/test samples
-#X_train, y_train = extract_samples()
-#X_val, y_val = extract_samples()
-#X_test, y_test = extract_samples()
+X_train, y_train = extract_samples(train_files)
+X_val, y_val = extract_samples(val_files)
+X_test, y_test = extract_samples(test_files)
 
-X, y = extract_samples(test_files)
 
+# Train model
+clf = train_classifier(X_train, y_train)
+
+
+# Test model
+get_test_results(X_test, y_test)
 
 
 # End of script
