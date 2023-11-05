@@ -120,7 +120,7 @@ def extract_samples(fileset):
     
     
     # Balance dataset
-    #noise_features = balance_dataset(whale_features, noise_features)
+    noise_features = balance_dataset(whale_features, noise_features)
     
     
     # Label samples
@@ -207,12 +207,17 @@ def calculate_mfccs(y):
     return mfccs
 
 
-def balance_dataset(minor_class, major_class):
+def balance_dataset(whale_features, noise_features):
     """Sub-sample the majority class to balance the dataset."""
     
+    no_whale_samples = whale_features.shape[0]
     
+    np.random.shuffle(noise_features)
     
-    return None
+    noise_features = noise_features[0:no_whale_samples, :]
+  
+    
+    return noise_features
 
 
 def label_samples(whale_features, noise_features):
