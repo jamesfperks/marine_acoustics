@@ -4,6 +4,7 @@ import librosa
 import numpy as np
 import scipy.io.wavfile
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import confusion_matrix, classification_report
 from playsound import playsound
 
 
@@ -12,18 +13,19 @@ from playsound import playsound
 
 # CONSTANTS
 # ----------------------------------------------------------------------------
-DATA_FILEPATH = '../data/Moby_non_toothed/SouthernRightWhale001-v1'
+DATA_FILEPATH = 'data/Moby_non_toothed/SouthernRightWhale001-v1'
 FILE_SPLIT = (3,1,1)    # Number of train/val/test files
 SR = 8000               # Sample rate in samples/sec
 FRAME_DURATION = 100    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
 N_MFCC = 3              # no. of mfccs to calculate
+N_MELS = 64             # no. Mel bands used in mfcc calc (default 128)
 
 
 # ----------------------------------------------------------------------------
 # RUNTIME CONSTANTS (DO NOT CHANGE)
 FRAME_LENGTH = SR * FRAME_DURATION // 1000   # frame size in samples
-HOP_LENGTH = FRAME_LENGTH * FRAME_OVERLAP // 100   # stride length in samples
+HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100   # stride in samples
 # ----------------------------------------------------------------------------
 
 
@@ -41,18 +43,11 @@ def get_files():
     # List all .wav files in cwd
     wav_files = glob.glob('*.wav', root_dir=DATA_FILEPATH)
     
-    
-    if len(log_files) == len(wav_files):
-        files = list(zip(log_files, wav_files))
-        
-    else:
-        raise FileNotFoundError('Mismatched number of .wav and log files.')
+    # Check files are valid for classification
+    test_files(log_files, wav_files)
     
     
-    for log, wav in files:
-        if log[:-4] != wav[:-4]:
-            raise NameError('Name of log file and .wav file do not match.')
-            
+    files = list(zip(log_files, wav_files))
     data_dir = DATA_FILEPATH.split('/')[-1]
     
     print(f'Data directory: {data_dir}\n')
@@ -60,6 +55,28 @@ def get_files():
     
     return files
 
+
+def test_files(log_files, wav_files):
+    """Check files are valid for classification"""
+    
+    # Check for matching number of log and .wav pairs
+    if len(log_files) != len(wav_files):
+        raise FileNotFoundError('Mismatched number of .wav and log files.')
+    
+    files = list(zip(log_files, wav_files))
+    for log, wav in files:
+        
+        # Check names match
+        if log[:-4] != wav[:-4]:
+            raise NameError('Name of log file and .wav file do not match:\n' +
+                            f'{log}, {wav}')
+            
+        # Test log times are sorted in order with no overlap
+        time_log = get_time_log(log)
+        time_indexes = time2index(time_log).flatten()
+        if np.array_equal(np.sort(time_indexes), time_indexes) == False:    
+            raise IndexError(f'Log file: {log}\n Time values overlap.')
+     
 
 def split_files(files):
     """Split files for train, val, test"""
@@ -95,14 +112,6 @@ def extract_samples(fileset):
     
     
     """
-	1. combine whale sections and noise sections for all recordings
-
-	2. Feature vector per section per class
-		○ 2.1 calculate mfccs
-		○ Other things e.g. deltas added later
-	3. Stack all feature vectors from each section per class
-    
-    
     Test files results:
         
     Using slice_data to generate frames gives
@@ -118,26 +127,33 @@ def extract_samples(fileset):
     CHECK WHY THIS IS...
     
     CHECK THAT ZERO SECTION DATA IS FIXED...
+    IMPORTANT THIS MAY HAVE CHANGED THE ORDER OF WHALE/NOISE SECTIONS
+    THE ZERO ARRAY IN TRACK 7 APPEARS IN THE NOISE SECTIONS....
     i.e. the fact that some sections are empty lists [] due to dodgy
     log values does not matter
     
     """
     
-    # 1. Improve this...
+    # Combine sections from all recordings
     all_whale_sections = []
     all_noise_sections = []
     
-    
     for log_filename, wav_filename in fileset:
-        whale_sections, noise_sections = separate_class_data(log_filename, wav_filename)
+        whale_sections, noise_sections = separate_class_data(log_filename,
+                                                             wav_filename)
+        
         all_whale_sections.extend(whale_sections)
         all_noise_sections.extend(noise_sections)
-                
+      
     
-    # 2. and 3. Improve this...
+    # Extract features
+    all_whale_features = np.vstack(tuple(extract_features(section) for
+                                         section in all_whale_sections
+                                         if section.size > 0))
     
-    all_whale_features = np.vstack(tuple(extract_features(section) for section in all_whale_sections if section.size > 0))
-    all_noise_features = np.vstack(tuple(extract_features(section) for section in all_noise_sections if section.size > 0))
+    all_noise_features = np.vstack(tuple(extract_features(section) for
+                                         section in all_noise_sections
+                                         if section.size > 0))
     
     
     #all_whale_frames = np.vstack(tuple(slice_data(section) for section in all_whale_sections if section.size > 0))
@@ -160,7 +176,6 @@ def extract_samples(fileset):
     y = all_samples[:,-1]
 
     
-    
     """
     LEGACY
     # Format: [(["whale1"], ["noise1"]), (["whale2"], ["noise2"]), ...]
@@ -182,7 +197,7 @@ def extract_samples(fileset):
 
 
 def separate_class_data(log_filename, wav_filename):
-    """Extract "whale" and "noise" frames from a given log and .wav file"""
+    """Extract "whale" and "noise" sections from a given log and .wav file"""
     
     # Read in log and audio
     time_log = get_time_log(log_filename)
@@ -206,6 +221,7 @@ def extract_labelled_sections(y, time_log_indexes):
     # Format: [["noise"], ["whale"], ["noise"], ["whale"]...]
     sections = np.split(y, time_log_indexes.flatten())
     
+    
     # Separate into whale and noise sections
     whale_sections = sections[1::2]
     noise_sections = sections[::2]
@@ -224,8 +240,7 @@ def extract_features(data):
 def calculate_mfccs(y):
     # Calculate MFCCs
     mfccs = np.transpose(librosa.feature.mfcc(y=y, sr=SR, n_mfcc=N_MFCC, n_fft=FRAME_LENGTH,
-                                 hop_length=HOP_LENGTH))
-    #print(f'First {N_MFCC} MFCCs:\n' + '-'*40 + f'\n{mfccs[:,0]}')
+                                 hop_length=HOP_LENGTH, n_mels=N_MELS))
     
     return mfccs
 
@@ -255,7 +270,7 @@ def time2index(time_log):
     (i.e end index sample should be included in the next "noise" slice).
     
     """
-    
+    #print(np.sum(time_log[:,1]-time_log[:,0]))
     # Convert seconds to sample number
     time_log_samples = time_log * SR
     
@@ -278,14 +293,13 @@ def read_audio(wav_filename):
     
     # File path to .wav file
     audio_file_path = DATA_FILEPATH + '/' + wav_filename
-    filename = audio_file_path.split('/')[-1]
+    #filename = audio_file_path.split('/')[-1]
     
     # Read entire mono .wav file using default sampling rate
     y, sr = librosa.load(audio_file_path, sr=None, duration=None)
     #print(f'\nLoaded file: {filename}\n' + '-'*40 + '\n')
     #print(f'Duration: {y.size/sr} seconds\n' + '-'*40 + '\n')
     #print(f'Sample rate: {sr} Hz\n' + '-'*40)
-
     return y
 
 
@@ -314,7 +328,7 @@ def slice_data(data):    # Legacy?
     return frame_view
 
 
-def play_audio(y, sr):
+def play_audio(y):
     """Play audio given sample data and sampling rate"""
     
     # Possibly use playsound==1.2.2 to resolve relative path issue?
@@ -336,21 +350,32 @@ def train_classifier(X_train, y_train):
     """
     
     clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-                                     max_depth=1, random_state=0).fit(X_train, y_train)
+                                     max_depth=1,
+                                     random_state=0).fit(X_train, y_train)
     
     return clf
 
 
-def get_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test):
+def calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test):
     
     train_score = clf.score(X_train, y_train)
     val_score = clf.score(X_val, y_val)
     test_score = clf.score(X_test, y_test)
     
     
-    print('\n' + '-'*40 + '\nClassifier Scores:\n' + '-'*40)
+    print('\n' + '-'*40 + '\nClassifier Accuracy:\n' + '-'*40)
     print(f'\nTraining: {train_score}\n\nValidation: {val_score}\n\n'
           f'Testing: {test_score}')
+    
+    
+def calculate_confusion_matrix(y_true, y_pred):
+    c_matrix = confusion_matrix(y_true, y_pred)
+    print('\n' + '-'*40 + '\nConfusion Matrix:\n' + '-'*40)
+    print(c_matrix)
+    
+    tn, fp, fn, tp = c_matrix.ravel()
+    
+    return tn, fp, fn, tp
 
 
 def main():
@@ -372,14 +397,19 @@ def main():
 
     # Train model
     clf = train_classifier(X_train, y_train)
-
+    
+    
+    # Predict
+    y_test_pred = clf.predict(X_test)
 
     # Results
-    get_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
-
+    calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
+    tn, fp, fn, tp = calculate_confusion_matrix(y_test, y_test_pred)
+    
 
     # End of script
     print('\nEnd' + '-'*40)
+    
 
 
 if __name__ == '__main__':
