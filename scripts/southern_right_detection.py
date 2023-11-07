@@ -21,11 +21,12 @@ FRAME_OVERLAP = 50      # Frame overlap (%)
 N_MFCC = 3              # no. of mfccs to calculate
 N_MELS = 64             # no. Mel bands used in mfcc calc (default 128)
 SEED = 12345            # Set random seed
+MIN_SAMPLES = 300       # Set minimum no. of class samples in a fileset
 
 # ----------------------------------------------------------------------------
 # RUNTIME CONSTANTS (DO NOT CHANGE)
 FRAME_LENGTH = SR * FRAME_DURATION // 1000   # frame size in samples
-HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100   # stride in samples
+HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100 # stride in samples
 # ----------------------------------------------------------------------------
 
 
@@ -185,9 +186,19 @@ def get_class_features(whale_sections, noise_sections):
                                          section in whale_sections
                                          if section.size > 0))
     
+    no_whale_samples = whale_features.shape[0]
+    if  no_whale_samples < MIN_SAMPLES:
+        print(f'\n WARNING: Number of whale samples ({no_whale_samples}) '
+              f'is below recommended minimum ({MIN_SAMPLES}).\n')
+    
     noise_features = np.vstack(tuple(extract_features(section) for
                                          section in noise_sections
                                          if section.size > 0))
+    
+    no_noise_samples = noise_features.shape[0]
+    if  no_noise_samples < MIN_SAMPLES:
+        print(f'\n WARNING: Number of noise samples ({no_noise_samples}) '
+              f'is below recommended minimum ({MIN_SAMPLES}).\n')
     
     return whale_features, noise_features
 
@@ -395,7 +406,10 @@ def get_classification_report(y_true, y_pred):
     targets = ['nosie', 'whale']
     
     print('\n' + '-'*40 + '\nClassification Report:\n' + '-'*40 + 
-          f'\n{classification_report(y_true, y_pred,target_names=targets)}')
+          f'\n{classification_report(y_true, y_pred,target_names=targets)}'
+          '\nNB: For binary classification, recall of the positive class'
+          ' is known as “sensitivity”; recall of the negative class is '
+          '“specificity”.\n')
     
     
 
