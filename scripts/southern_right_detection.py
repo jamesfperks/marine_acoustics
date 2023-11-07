@@ -362,6 +362,7 @@ def train_classifier(X_train, y_train):
 
 
 def calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test):
+    """Calculate train, val, test scores and print results."""
     
     train_score = clf.score(X_train, y_train)
     val_score = clf.score(X_val, y_val)
@@ -374,13 +375,29 @@ def calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test):
     
     
 def calculate_confusion_matrix(y_true, y_pred):
-    c_matrix = confusion_matrix(y_true, y_pred)
-    print('\n' + '-'*40 + '\nConfusion Matrix:\n' + '-'*40)
-    print(c_matrix)
+    """Caclulate and print confusion matrix."""
     
+    c_matrix = confusion_matrix(y_true, y_pred)
+    ref = np.array([['TN', 'FP'], ['FN', 'TP']])
+                    
+    print('\n' + '-'*40 + '\nConfusion Matrix:\n' + '-'*40 + 
+          f'\n{ref[0]}' + '-'*3 + f'{c_matrix[0]}' + 
+          f'\n{ref[1]}' + '-'*3 + f'{c_matrix[1]}')
+        
     tn, fp, fn, tp = c_matrix.ravel()
     
     return tn, fp, fn, tp
+
+
+def get_classification_report(y_true, y_pred):
+    """Print the scikit learn classification report."""
+    
+    targets = ['nosie', 'whale']
+    
+    print('\n' + '-'*40 + '\nClassification Report:\n' + '-'*40 + 
+          f'\n{classification_report(y_true, y_pred,target_names=targets)}')
+    
+    
 
 
 def main():
@@ -411,13 +428,12 @@ def main():
     # Results
     calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
     tn, fp, fn, tp = calculate_confusion_matrix(y_test, y_test_pred)
-    print(classification_report(y_test, y_test_pred))
+    get_classification_report(y_test, y_test_pred)
 
     # End of script
     print('\nEnd' + '-'*40)
     
-
-
+    
 if __name__ == '__main__':
     main()
 
