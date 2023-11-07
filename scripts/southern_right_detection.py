@@ -20,7 +20,7 @@ FRAME_DURATION = 100    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
 N_MFCC = 3              # no. of mfccs to calculate
 N_MELS = 64             # no. Mel bands used in mfcc calc (default 128)
-
+SEED = 12345            # Set random seed
 
 # ----------------------------------------------------------------------------
 # RUNTIME CONSTANTS (DO NOT CHANGE)
@@ -107,7 +107,7 @@ def print_files(fileset):
         print('   - ' + file)
         
 
-def extract_samples(fileset):
+def extract_samples(fileset, is_balanced=True):
     """Extract feature vector X and labels y from a given fileset"""
     
     # Get sections from all recordings
@@ -120,7 +120,8 @@ def extract_samples(fileset):
     
     
     # Balance dataset
-    noise_features = balance_dataset(whale_features, noise_features)
+    noise_features = balance_dataset(whale_features, noise_features,
+                                     is_balanced)
     
     
     # Label samples
@@ -207,14 +208,15 @@ def calculate_mfccs(y):
     return mfccs
 
 
-def balance_dataset(whale_features, noise_features):
+def balance_dataset(whale_features, noise_features, is_balanced=True):
     """Sub-sample the majority class to balance the dataset."""
     
-    no_whale_samples = whale_features.shape[0]
-    
-    np.random.shuffle(noise_features)
-    
-    noise_features = noise_features[0:no_whale_samples, :]
+    if is_balanced == True:
+        no_whale_samples = whale_features.shape[0]
+        
+        np.random.shuffle(noise_features)
+        
+        noise_features = noise_features[0:no_whale_samples, :]
   
     
     return noise_features
@@ -354,7 +356,7 @@ def train_classifier(X_train, y_train):
     
     clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
                                      max_depth=1,
-                                     random_state=0).fit(X_train, y_train)
+                                     random_state=SEED).fit(X_train, y_train)
     
     return clf
 
@@ -386,6 +388,8 @@ def main():
     # Start of script
     print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
 
+    # Set random seed
+    np.random.seed(seed=SEED)
 
     # Read in files
     files = get_files()
@@ -401,14 +405,13 @@ def main():
     # Train model
     clf = train_classifier(X_train, y_train)
     
-    
     # Predict
     y_test_pred = clf.predict(X_test)
 
     # Results
     calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
     tn, fp, fn, tp = calculate_confusion_matrix(y_test, y_test_pred)
-    
+    print(classification_report(y_test, y_test_pred))
 
     # End of script
     print('\nEnd' + '-'*40)
