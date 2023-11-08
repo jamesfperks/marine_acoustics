@@ -113,22 +113,42 @@ def print_files(fileset):
 def extract_samples(fileset, is_balanced=True):
     """Extract feature vector X and labels y from a given fileset"""
     
-    # Get sections from all recordings
-    whale_sections, noise_sections = get_class_sections(fileset)
     
+    all_whale_features = []
+    all_noise_features = []
+    for log_filename, wav_filename in fileset:
     
-    # Extract features
-    whale_features, noise_features = get_class_features(whale_sections,
-                                                        noise_sections)
+        # Read in log and audio
+        time_log = get_time_log(log_filename)
+        y = read_audio(wav_filename)
+        
+        
+        # Calculate features for entire recording
+        y_features = extract_features(y)
+        
+        
+        # Split features into whale and noise
+        whale_features, noise_features = separate_features(y_features,
+                                                           time_log)
+        
+        # Combine whale and noise features for all recordings
+        all_whale_features.append(whale_features)
+        all_noise_features.append(noise_features)
+        
+    
+    # Concatenate features from all recordings
+    all_whale_features = np.concatenate(all_whale_features)
+    all_noise_features = np.concatenate(all_noise_features)
     
     
     # Balance dataset
-    noise_features = balance_dataset(whale_features, noise_features,
-                                     is_balanced)
+    all_noise_features = balance_dataset(all_whale_features,
+                                         all_noise_features,
+                                         is_balanced)
     
     
     # Label samples
-    labelled_samples = label_samples(whale_features, noise_features)
+    labelled_samples = label_samples(all_whale_features, all_noise_features)
     
     # Collect and randomise sample set
     X, y = get_sample_vectors(labelled_samples)
@@ -136,71 +156,49 @@ def extract_samples(fileset, is_balanced=True):
     return X, y
 
 
-def get_class_sections(fileset):
-    """Get all whale and noise sections from all recordings"""
+def separate_features(features, time_log):
+    """Separate features into whale and noise features."""
     
-    all_whale_sections = []
-    all_noise_sections = []
     
-    for log_filename, wav_filename in fileset:
-        whale_sections, noise_sections = separate_class_data(log_filename,
-                                                             wav_filename)
-        
-        all_whale_sections.extend(whale_sections)
-        all_noise_sections.extend(noise_sections)
-    
-    return all_whale_sections, all_noise_sections
-
-
-def separate_class_data(log_filename, wav_filename):
-    """Extract "whale" and "noise" sections from a given log and .wav file"""
-    
-    # Read in log and audio
-    time_log = get_time_log(log_filename)
-    y = read_audio(wav_filename)
-    
-    # Separate into "whale" and "noise" sections
+    # Convert times to sample indexes
     time_log_indexes = time2index(time_log)
-    whale_sections, noise_sections = extract_labelled_sections(y, time_log_indexes)
     
-    return whale_sections, noise_sections
+    # Convert to frame indexes
+    frame_indexes = index2frame(time_log_indexes)
+    
+    # Extract labelled features
+    whale_features, noise_features = extract_labelled_features(features,
+                                                               frame_indexes)
+    
+    return whale_features, noise_features 
 
 
-def extract_labelled_sections(y, time_log_indexes):
-    """Extract sections of "whale" and "noise" given time-indexes"""
+def index2frame(time_log_indexes):
+    """Convert time log indexes to frame indexes."""
+
+    frame_indexes = np.apply_along_axis(librosa.samples_to_frames, 0,
+                                        time_log_indexes,
+                                        hop_length=HOP_LENGTH,
+                                        n_fft=FRAME_LENGTH)
     
-    # Split samples into alternating sections.
+    for idx in frame_indexes.flatten():
+        if idx < 0:
+            raise ValueError('Negative frame index calculated during sample '
+                             'index to frame index conversion.')
+    
+    return frame_indexes
+
+
+def extract_labelled_features(features, frame_indexes):
+    """Extract "whale" and "noise" features given frame-indexes"""
+    
+    # Split features into alternating sections.
     # Format: [["noise"], ["whale"], ["noise"], ["whale"]...]
-    sections = np.split(y, time_log_indexes.flatten())
+    sections = np.split(features, frame_indexes.flatten())
     
-    
-    # Separate into whale and noise sections
-    whale_sections = sections[1::2]
-    noise_sections = sections[::2]
-    
-    return whale_sections, noise_sections
-
-
-def get_class_features(whale_sections, noise_sections):
-    """Compute the feature vectors for each class."""
-    
-    whale_features = np.vstack(tuple(extract_features(section) for
-                                         section in whale_sections
-                                         if section.size > 0))
-    
-    no_whale_samples = whale_features.shape[0]
-    if  no_whale_samples < MIN_SAMPLES:
-        print(f'\n WARNING: Number of whale samples ({no_whale_samples}) '
-              f'is below recommended minimum ({MIN_SAMPLES}).\n')
-    
-    noise_features = np.vstack(tuple(extract_features(section) for
-                                         section in noise_sections
-                                         if section.size > 0))
-    
-    no_noise_samples = noise_features.shape[0]
-    if  no_noise_samples < MIN_SAMPLES:
-        print(f'\n WARNING: Number of noise samples ({no_noise_samples}) '
-              f'is below recommended minimum ({MIN_SAMPLES}).\n')
+    # Separate into whale and noise features
+    whale_features = np.concatenate(sections[1::2])
+    noise_features = np.concatenate(sections[::2])
     
     return whale_features, noise_features
 
@@ -322,25 +320,6 @@ def read_audio(wav_filename):
     y_norm = librosa.util.normalize(y)
     
     return y_norm
-
-
-def generate_frames(audio_sections):    # Legacy?
-    """
-    Create frames given a series of continuous audio sections
-    
-    Returns: 2D array of shape (no_frames, FRAME_LENGTH)
-    
-    LEGACY FUNCTION?
-    """
-    
-    # Check if y.size > 0 to prevent error from slicing empty frames
-    frames_tuple = tuple(slice_data(y) for y in audio_sections if y.size > 0)
-    frames = np.vstack(frames_tuple)
-    
-    return frames
-
-
-def slice_data(data):    # Legacy?
     """Slice 1D array into frames with a given overlap"""
     
     frame_view = librosa.util.frame(data, frame_length=FRAME_LENGTH,
@@ -469,7 +448,7 @@ def main():
     calculate_all_scores(clf, X_train, y_train, X_val, y_val, X_test, y_test)
     tn, fp, fn, tp = calculate_confusion_matrix(y_test, y_test_pred)
     get_classification_report(y_test, y_test_pred)
-
+    
     # End of script
     print('\nEnd' + '-'*40)
     
