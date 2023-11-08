@@ -2,6 +2,7 @@ import glob
 import os
 import librosa
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.io.wavfile
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
@@ -19,7 +20,7 @@ FILE_SPLIT = (3,1,1)    # Number of train/val/test files
 SR = 8000               # Sample rate in samples/sec
 FRAME_DURATION = 100    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
-N_MFCC = 12              # no. of mfccs to calculate
+N_MFCC = 12             # no. of mfccs to calculate
 N_MELS = 64             # no. Mel bands used in mfcc calc (default 128)
 SEED = 12345            # Set random seed
 MIN_SAMPLES = 300       # Set minimum no. of class samples in a fileset
@@ -317,6 +318,7 @@ def read_audio(wav_filename):
     #print(f'Duration: {y.size/sr} seconds\n' + '-'*40 + '\n')
     #print(f'Sample rate: {sr} Hz\n' + '-'*40)
     
+    # Normalise to [-1, 1]
     y_norm = librosa.util.normalize(y)
     
     return y_norm
@@ -359,6 +361,18 @@ def play_audio(y):
     playsound(sample_audio_filepath)
     print('\nAudio finished.\n')
    
+
+def plot_waveform(y, axis='s', offset=0.0, title='Audio Waveform',
+                  xlabel='Time (s)', ylabel='Amplitude'):
+    """Plot the signal waveform in the time domain"""
+
+    # Plot
+    plt.figure()
+    librosa.display.waveshow(y, sr=SR, max_points=SR//2, axis=axis, offset=offset)
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
 
 def train_classifier(X_train, y_train):
     """Train classifier.
