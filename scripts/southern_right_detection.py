@@ -5,6 +5,7 @@ import numpy as np
 import scipy.io.wavfile
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.model_selection import GridSearchCV
 from playsound import playsound
 
 
@@ -18,7 +19,7 @@ FILE_SPLIT = (3,1,1)    # Number of train/val/test files
 SR = 8000               # Sample rate in samples/sec
 FRAME_DURATION = 100    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
-N_MFCC = 3              # no. of mfccs to calculate
+N_MFCC = 12              # no. of mfccs to calculate
 N_MELS = 64             # no. Mel bands used in mfcc calc (default 128)
 SEED = 12345            # Set random seed
 MIN_SAMPLES = 300       # Set minimum no. of class samples in a fileset
@@ -309,14 +310,16 @@ def read_audio(wav_filename):
     
     # File path to .wav file
     audio_file_path = DATA_FILEPATH + '/' + wav_filename
-    #filename = audio_file_path.split('/')[-1]
     
     # Read entire mono .wav file using default sampling rate
     y, sr = librosa.load(audio_file_path, sr=None, duration=None)
-    #print(f'\nLoaded file: {filename}\n' + '-'*40 + '\n')
+    #print(f'\nLoaded file: {wav_filename}\n' + '-'*40 + '\n')
     #print(f'Duration: {y.size/sr} seconds\n' + '-'*40 + '\n')
     #print(f'Sample rate: {sr} Hz\n' + '-'*40)
-    return y
+    
+    y_norm = librosa.util.normalize(y)
+    
+    return y_norm
 
 
 def generate_frames(audio_sections):    # Legacy?
@@ -350,7 +353,7 @@ def play_audio(y):
     # Possibly use playsound==1.2.2 to resolve relative path issue?
     
     scipy.io.wavfile.write('sample.wav', SR, y)
-    sample_audio_filepath = os.getcwd() + '\sample.wav'
+    sample_audio_filepath = os.getcwd() + '/scripts/sample.wav'
     
     print('\nPlaying sample .wav file...')
     playsound(sample_audio_filepath)
@@ -365,9 +368,18 @@ def train_classifier(X_train, y_train):
     If training data is not in this format, a copy of the dataset will be made.
     """
     
-    clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-                                     max_depth=1,
+    parameters = {
+    "learning_rate": [0.001, 0.01, 0.1, 1],
+    "max_depth":[1,2,3],
+    "n_estimators":[10, 100, 1000]
+    }
+    
+    #clf = GridSearchCV(GradientBoostingClassifier(), parameters, n_jobs=-1)
+    clf = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
+                                     max_depth=2,
                                      random_state=SEED).fit(X_train, y_train)
+    #clf.fit(X_train, y_train)
+    #print(clf.best_params_)
     
     return clf
 
@@ -450,6 +462,7 @@ def main():
     
 if __name__ == '__main__':
     main()
+   
 
 
 
