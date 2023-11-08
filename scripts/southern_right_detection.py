@@ -415,7 +415,27 @@ def get_classification_report(y_true, y_pred):
           '\nNB: For binary classification, recall of the positive class'
           ' is known as “sensitivity”; recall of the negative class is '
           '“specificity”.\n')
+  
+
+def plot_3_mfccs(wav_filename):
+    """Plot first 3 mfccs for a given .wav file."""
     
+    y = read_audio(wav_filename)
+    mfccs = calculate_mfccs(y)
+    
+    # Plot
+    x = np.arange(mfccs.shape[0])
+    y1 = mfccs[:,0]
+    y2 = mfccs[:,1]
+    y3 = mfccs[:,2]
+    plt.plot(x, y1)
+    plt.plot(x, y2)
+    plt.plot(x, y3)
+    
+    plt.title('First 3 MFCCs')
+    plt.xlabel('Frame Number')
+    plt.ylabel('MFCC Value')
+    plt.legend(['1st Coeff', '2nd Coeff', '3rd Coeff'])
     
 
 
@@ -423,6 +443,7 @@ def main():
 
     # Start of script
     print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
+    plt.close()
 
     # Set random seed
     np.random.seed(seed=SEED)
@@ -449,13 +470,15 @@ def main():
     tn, fp, fn, tp = calculate_confusion_matrix(y_test, y_test_pred)
     get_classification_report(y_test, y_test_pred)
     
+    # Plot MFCCs
+    plot_3_mfccs('sar98_trk1a_8000.wav')
+    
     # End of script
     print('\nEnd' + '-'*40)
     
     
 if __name__ == '__main__':
     main()
-   
 
 
 
