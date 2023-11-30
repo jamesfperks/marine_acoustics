@@ -19,8 +19,8 @@ Anartctic Blue and Fin Whale sounds.
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
 FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
-FMAX = 125
-FMIN = 15
+FMAX = 35
+FMIN = 10
 STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
 STFT_OVERLAP = 75      # STFT window overlap (%)
 N_MFCC = 12             # no. of mfccs to calculate
@@ -31,7 +31,7 @@ N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 TRAINING_SITES = [0,1,2,3,4,5]
 
 # Indexes of call types for training
-TRAINING_CALL_TYPES = [3,6]    
+TRAINING_CALL_TYPES = [0,1,2]    
  
 # Indexes of sites for testng
 # [] empty brace defaults to using all sites not used in training
