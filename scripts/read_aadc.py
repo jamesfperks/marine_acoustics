@@ -17,21 +17,25 @@ Anartctic Blue and Fin Whale sounds.
 # CONSTANTS
 # ----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
-FRAME_DURATION = 750    # Frame duration in milliseconds
+FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
+FMAX = 125
+FMIN = 15
+STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
+STFT_OVERLAP = 75      # STFT window overlap (%)
 N_MFCC = 12             # no. of mfccs to calculate
 N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 #SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [0,1,2,3,4,5,6] 
+TRAINING_SITES = [0,1,2,3,4,5]
 
 # Indexes of call types for training
-TRAINING_CALL_TYPES = [3]    
+TRAINING_CALL_TYPES = [3,6]    
  
 # Indexes of sites for testng
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = []
+TEST_SITES = [6,8,10]
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
@@ -180,21 +184,45 @@ def calculate_mfccs(y, sr):
     HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100
     
     # Calculate MFCCs
-    mfccs = np.transpose(librosa.feature.mfcc(y=y,
-                                              sr=sr,
-                                              n_mfcc=N_MFCC,
-                                              n_fft=FRAME_LENGTH,
-                                              hop_length=HOP_LENGTH,
-                                              n_mels=N_MELS))
+    mfccs = librosa.feature.mfcc(y=y,
+                                 sr=sr,
+                                 n_mfcc=N_MFCC,
+                                 n_fft=FRAME_LENGTH,
+                                 hop_length=HOP_LENGTH,
+                                 n_mels=N_MELS,
+                                 fmin=FMIN,
+                                 fmax=FMAX).T
     
     return mfccs
     
+
+def calculate_stft(y, sr):
+    """Compute STFT and split data into frames."""
+    
+    # Calculate frame size and overlap in samples
+    FRAME_LENGTH = sr * FRAME_DURATION // 1000
+    HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100
+    STFT_WINDOW_LENGTH = sr * STFT_WINDOW_DURATION // 1000
+    STFT_HOP_LENGTH = STFT_WINDOW_LENGTH * (100-FRAME_OVERLAP) // 100
+    
+    # STFT of y
+    D = librosa.stft(y, n_fft=FRAME_LENGTH, hop_length=HOP_LENGTH)
+    
+    # STFT in dB
+    S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
+    
+                
+    return S_db
+
 
 def extract_features(y, sr):
     """Frame data and extract features for each frame."""
     
     # Calculate MFCCs
     mfccs = calculate_mfccs(y, sr)
+    
+    # Calculate STFT and split into frame
+    #stft = calculate_stft(y, sr)
     
     # Return feature vectors for each frame
     y_features = mfccs
