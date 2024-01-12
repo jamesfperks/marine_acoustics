@@ -44,7 +44,7 @@ TEST_CALL_TYPES = []
 #--------------------------------------------------------------
 
 
-def get_log_filenames():
+def get_folder_structure():
     """Read the folder structure csv file and save as a pd dataframe."""
     
     csv_filepath = DATA_FILEPATH + '/01-Documentation/folderStructure.csv'
@@ -54,10 +54,10 @@ def get_log_filenames():
     return df
 
 
-def print_recording_sites(df_log_filenames):
+def print_recording_sites(df_folder_structure):
     """Print list of recording sites with indexes."""
     
-    df = df_log_filenames
+    df = df_folder_structure
     print('Recording sites:\n' + '-'*20)
     for i in range(df.shape[0]):
         print(f' {i}' + ' '*(4-len(str(i))) + df.index[i])
@@ -81,7 +81,7 @@ def print_call_types():
         print(f' {i}  ' + call_types[i])
 
 
-def get_total_annotation_count(df_log_filenames):
+def get_total_annotation_count(df_folder_structure):
     """
     Return a dataframe containing the total number of annotations
     for each site and call type.
@@ -93,29 +93,29 @@ def get_total_annotation_count(df_log_filenames):
     for call_type in call_types:
         annotation_counts = []
         
-        for site in df_log_filenames.index:
-            annotation_counts.append(count_annotations(df_log_filenames,
+        for site in df_folder_structure.index:
+            annotation_counts.append(count_annotations(df_folder_structure,
                                                       site, call_type))
           
         annotation_dict[call_type] = annotation_counts
     
-    return pd.DataFrame(annotation_dict, index=df_log_filenames.index)
+    return pd.DataFrame(annotation_dict, index=df_folder_structure.index)
     
 
-def get_log_filepath(site, call_type, df_log_filenames):
+def get_log_filepath(site, call_type, df_folder_structure):
     """Return filepath to a log file given a site name and call type."""
     
     log_header = call_type_2_log_header(call_type)
-    rel_filepath = df_log_filenames.loc[site, ['Folder', log_header]].str.cat()
+    rel_filepath = df_folder_structure.loc[site, ['Folder', log_header]].str.cat()
     log_filepath = DATA_FILEPATH + '/' + rel_filepath
     
     return log_filepath
 
 
-def count_annotations(df_log_filenames, site, call_type):
+def count_annotations(df_folder_structure, site, call_type):
     """Count the number of call annotations for a given site and call type."""
     
-    log_filepath = get_log_filepath(site, call_type, df_log_filenames)
+    log_filepath = get_log_filepath(site, call_type, df_folder_structure)
     
     with open(log_filepath, "rb") as f:
         n_annotations = sum(1 for line in f) - 1
@@ -139,10 +139,10 @@ def call_type_2_log_header(call_type):
     return call_2_log[call_type]
 
 
-def read_log(site, call_type, df_log_filenames):
+def read_log(site, call_type, df_folder_structure):
     """Read log .txt file into a dataframe."""
     
-    log_filepath = get_log_filepath(site, call_type, df_log_filenames)
+    log_filepath = get_log_filepath(site, call_type, df_folder_structure)
     
     
     fields = ['Begin File', 'End File','Begin Time (s)', 'End Time (s)',
@@ -155,7 +155,7 @@ def read_log(site, call_type, df_log_filenames):
     return df_log
 
 
-def read_audio(site, wav_filename, df_log_filenames):
+def read_audio(site, wav_filename, df_folder_structure):
     """Read audio and sample rate and normalise given a .wav filename."""
     
     # Truncated redundant .wav filenames to match the G64 2015 folder
@@ -164,7 +164,7 @@ def read_audio(site, wav_filename, df_log_filenames):
     
     
     # File path to .wav file
-    site_folder = df_log_filenames.loc[site, 'Folder'][:-1]
+    site_folder = df_folder_structure.loc[site, 'Folder'][:-1]
     wav_filepath = DATA_FILEPATH + '/' + site_folder + '/wav/' + wav_filename
     
     # Read entire mono .wav file using default sampling rate
@@ -309,7 +309,7 @@ def split_sample_vector(samples):
     return X, y
 
 
-def extract_samples(df_data_summary, df_log_filenames):
+def extract_samples(df_data_summary, df_folder_structure):
     """Extract labelled samples from .wav files."""
     
     sample_set = []
@@ -320,7 +320,7 @@ def extract_samples(df_data_summary, df_log_filenames):
         
         for call_type in df_data_summary.columns:
             
-            df_log = read_log(site, call_type, df_log_filenames)
+            df_log = read_log(site, call_type, df_folder_structure)
             
             if not df_log.empty:
                 logs.append(df_log)
@@ -338,7 +338,7 @@ def extract_samples(df_data_summary, df_log_filenames):
         for wavfile, logs in gb_wavfile:
             
             # Read in audio
-            y, sr = read_audio(site, wavfile, df_log_filenames)
+            y, sr = read_audio(site, wavfile, df_folder_structure)
             
             # Frame and extract features
             y_features = extract_features(y, sr)
@@ -361,7 +361,7 @@ def extract_samples(df_data_summary, df_log_filenames):
     return X, y
 
 
-def get_training_set(df_annotations, df_log_filenames):
+def get_training_set(df_annotations, df_folder_structure):
     """Extract training samples."""
     
     # Training set summary
@@ -379,12 +379,12 @@ def get_training_set(df_annotations, df_log_filenames):
     print('\n' + '-'*50 + '\nTraining Set:\n' + '-'*50 + f'\n{df_trainset}')
     
     # Extract samples to use for training
-    X_train, y_train = extract_samples(df_trainset, df_log_filenames)
+    X_train, y_train = extract_samples(df_trainset, df_folder_structure)
     
     return X_train, y_train
     
     
-def get_test_set(df_annotations, df_log_filenames):
+def get_test_set(df_annotations, df_folder_structure):
     """Select sites and call types to use for testing."""
     
     test_sites = TEST_SITES
@@ -414,7 +414,7 @@ def get_test_set(df_annotations, df_log_filenames):
     print('\n' + '-'*50 + '\nTest Set:\n' + '-'*50 + f'\n{df_testset}')
     
     # Extract samples to use for testing
-    X_test, y_test = extract_samples(df_testset, df_log_filenames)
+    X_test, y_test = extract_samples(df_testset, df_folder_structure)
     
     return X_test, y_test
 
@@ -464,23 +464,23 @@ def main():
     print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
     print('An annotated library of Antarctic Blue and Fin Whale sounds.\n')
 
-    # Get log names
-    df_log_filenames = get_log_filenames()
+    # Get folder structure
+    df_folder_structure = get_folder_structure()
     
     # Print sites
-    print_recording_sites(df_log_filenames)
+    print_recording_sites(df_folder_structure)
     
     # Print call types
     print_call_types()
  
     # Get total annotation count
-    df_annotations = get_total_annotation_count(df_log_filenames)
+    df_annotations = get_total_annotation_count(df_folder_structure)
     
     # Select training set
-    X_train, y_train = get_training_set(df_annotations, df_log_filenames)
+    X_train, y_train = get_training_set(df_annotations, df_folder_structure)
     
     # Select test set
-    X_test, y_test = get_test_set(df_annotations, df_log_filenames)
+    X_test, y_test = get_test_set(df_annotations, df_folder_structure)
     
     # Train model
     clf = train_classifier(X_train, y_train)
