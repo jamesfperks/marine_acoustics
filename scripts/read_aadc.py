@@ -28,14 +28,14 @@ N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 #SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [0,1,2,3,4,5]
+TRAINING_SITES = [0,1,2,3,4,9,10]
 
 # Indexes of call types for training
 TRAINING_CALL_TYPES = [0,1,2]    
  
 # Indexes of sites for testng
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = [6,8,10]
+TEST_SITES = []
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
@@ -361,12 +361,11 @@ def extract_samples(df_data_summary, df_folder_structure):
     return X, y
 
 
-def get_training_set(df_annotations, df_folder_structure):
-    """Extract training samples."""
+def select_training_set(df_annotations):
+    """Select sites and call types to use for training."""
     
-    # Training set summary
+    # Training set annotation summary
     df_trainset = df_annotations.iloc[TRAINING_SITES, TRAINING_CALL_TYPES]
-    #df_trainset.loc['Total'] = df_trainset.sum(numeric_only=True, axis=0)
     
     # Raise error if no annotations exist
     if not df_trainset.any(axis=None):
@@ -375,16 +374,10 @@ def get_training_set(df_annotations, df_folder_structure):
         raise ValueError('Chosen sites and call-types '
                           'contain zero annotations.', sites, calls)
     
-    # Print summary
-    print('\n' + '-'*50 + '\nTraining Set:\n' + '-'*50 + f'\n{df_trainset}')
-    
-    # Extract samples to use for training
-    X_train, y_train = extract_samples(df_trainset, df_folder_structure)
-    
-    return X_train, y_train
-    
-    
-def get_test_set(df_annotations, df_folder_structure):
+    return df_trainset
+       
+ 
+def select_test_set(df_annotations):
     """Select sites and call types to use for testing."""
     
     test_sites = TEST_SITES
@@ -409,16 +402,32 @@ def get_test_set(df_annotations, df_folder_structure):
         calls = df_annotations.columns[test_call_types].to_list()
         raise ValueError('Chosen sites and call-types '
                           'contain zero annotations.', sites, calls)
-        
+    
+    return df_testset
+
+
+def print_dataset_summary(df_trainset, df_testset):
+    """Print a summary of the number of whale call annotations for the
+    training set and tesst set."""
+    
+    # Train/test ratio
+    train_tot = df_trainset.to_numpy().sum()
+    test_tot = df_testset.to_numpy().sum()
+    train_percent = round(100*train_tot/(train_tot + test_tot))
+    test_percent = round(100*test_tot/(train_tot + test_tot))
+    
+    # Print training set summary
+    print('\n' + '-'*50 + f'\nTraining Set: ({train_tot})\n'
+          + '-'*50 + f'\n{df_trainset}')
+    
     # Print testset summary
-    print('\n' + '-'*50 + '\nTest Set:\n' + '-'*50 + f'\n{df_testset}')
+    print('\n' + '-'*50 + f'\nTest Set: ({test_tot})\n'
+          + '-'*50 + f'\n{df_testset}')
     
-    # Extract samples to use for testing
-    X_test, y_test = extract_samples(df_testset, df_folder_structure)
+    # Train/test ratio printout
+    print(f'\nPercentage split train/test is {train_percent}/{test_percent}.')
     
-    return X_test, y_test
-
-
+    
 def train_classifier(X_train, y_train):
     """Train classifier."""
     
@@ -472,15 +481,24 @@ def main():
     
     # Print call types
     print_call_types()
- 
+    
     # Get total annotation count
     df_annotations = get_total_annotation_count(df_folder_structure)
     
     # Select training set
-    X_train, y_train = get_training_set(df_annotations, df_folder_structure)
+    df_trainset = select_training_set(df_annotations)
     
     # Select test set
-    X_test, y_test = get_test_set(df_annotations, df_folder_structure)
+    df_testset = select_test_set(df_annotations)
+    
+    # Print training and test set summary
+    print_dataset_summary(df_trainset, df_testset)
+    
+    # Get training samples
+    X_train, y_train = extract_samples(df_trainset, df_folder_structure)
+    
+    # Get test samples
+    X_test, y_test = extract_samples(df_testset, df_folder_structure)
     
     # Train model
     clf = train_classifier(X_train, y_train)
