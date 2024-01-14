@@ -1,7 +1,9 @@
 import os
+import time
 import librosa
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
@@ -24,18 +26,18 @@ FMIN = 10
 STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
 STFT_OVERLAP = 75      # STFT window overlap (%)
 N_MFCC = 12             # no. of mfccs to calculate
-N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
+N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
 #SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [0,1,2,3,4,9,10]
+TRAINING_SITES = [1,2,3,4]
 
 # Indexes of call types for training
-TRAINING_CALL_TYPES = [0,1,2]    
+TRAINING_CALL_TYPES = [0]    
  
-# Indexes of sites for testng
+# Indexes of sites for testing
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = []
+TEST_SITES = [6]
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
@@ -376,7 +378,23 @@ def select_training_set(df_annotations):
     
     return df_trainset
        
- 
+
+def get_training_samples(df_trainset, df_folder_structure):
+    """Return extracted trainings samples and print time taken."""
+    
+    print('\n'*2 + '-'*50 + '\nTRAINING PROGRESS\n' + '-'*50 + 
+          '\n  - Extracting trainings samples...', end='')
+    
+
+    start = time.time()
+    X_train, y_train = extract_samples(df_trainset, df_folder_structure)
+    end = time.time()
+    
+    print(f'100% ({end-start:.1f} s)')
+    
+    return X_train, y_train
+
+
 def select_test_set(df_annotations):
     """Select sites and call types to use for testing."""
     
@@ -406,6 +424,20 @@ def select_test_set(df_annotations):
     return df_testset
 
 
+def get_test_samples(df_testset, df_folder_structure):
+    """Return extracted test samples and print time taken."""
+    
+    print('  - Extracting test samples...', end='')
+    
+    start = time.time()
+    X_test, y_test = extract_samples(df_testset, df_folder_structure)
+    end = time.time()
+    
+    print(f'100% ({end-start:.1f} s)')
+    
+    return X_test, y_test
+
+
 def print_dataset_summary(df_trainset, df_testset):
     """Print a summary of the number of whale call annotations for the
     training set and tesst set."""
@@ -416,22 +448,32 @@ def print_dataset_summary(df_trainset, df_testset):
     train_percent = round(100*train_tot/(train_tot + test_tot))
     test_percent = round(100*test_tot/(train_tot + test_tot))
     
+    # Dataset summary
+    print('\n'*2 + '-'*50 + '\nDATASET SUMMARY\n' + '-'*50)
+    
     # Print training set summary
-    print('\n' + '-'*50 + f'\nTraining Set: ({train_tot})\n'
-          + '-'*50 + f'\n{df_trainset}')
+    print('\n' + f'\nTraining set: ({train_tot})\n'
+          + '-'*30 + f'\n{df_trainset}')
     
     # Print testset summary
-    print('\n' + '-'*50 + f'\nTest Set: ({test_tot})\n'
-          + '-'*50 + f'\n{df_testset}')
+    print('\n'*2 + f'\nTest set: ({test_tot})\n'
+          + '-'*30 + f'\n{df_testset}')
     
     # Train/test ratio printout
-    print(f'\nPercentage split train/test is {train_percent}/{test_percent}.')
+    print('\n'*2 + 'Percentage split train/test is '
+          f'{train_percent}/{test_percent}.\n')
     
     
 def train_classifier(X_train, y_train):
     """Train classifier."""
     
+    print('  - Training model...', end='')
+    
+    start = time.time()
     clf = GradientBoostingClassifier().fit(X_train, y_train)
+    end = time.time()
+    
+    print(f'100% ({end-start:.1f} s)')
    
     return clf
 
@@ -443,8 +485,8 @@ def get_results(clf, X_train, y_train, X_test, y_test):
     train_score = clf.score(X_train, y_train)
     test_score = clf.score(X_test, y_test)
     
-    print('\n' + '-'*40 + '\nClassifier Accuracy:\n' + '-'*40)
-    print(f'\nTraining: {train_score}\nTesting: {test_score}')
+    print('\n'*2 + '-'*50 + '\nRESULTS\n' + '-'*50)
+    print(f'\n  - Training: {train_score:.3f}\n  - Testing: {test_score:.3f}')
     
     # Confusion matrix
     tn, fp, fn, tp = calculate_confusion_matrix(X_test, y_test, clf)
@@ -459,9 +501,9 @@ def calculate_confusion_matrix(X_test, y_test, clf):
     # Printout
     ref = np.array([['TN', 'FP'], ['FN', 'TP']])
                   
-    print('\n' + '-'*40 + '\nConfusion Matrix:\n' + '-'*40 + 
-          f'\n{ref[0]}' + '-'*3 + f'{c_matrix[0]}' + 
-          f'\n{ref[1]}' + '-'*3 + f'{c_matrix[1]}')
+    print('\n' + '-'*0 + '\nConfusion Matrix:\n' + '-'*30 + 
+          f'\n   {ref[0]}' + '-'*3 + f'{c_matrix[0]}' + 
+          f'\n   {ref[1]}' + '-'*3 + f'{c_matrix[1]}')
         
     tn, fp, fn, tp = c_matrix.ravel()
     
@@ -495,10 +537,10 @@ def main():
     print_dataset_summary(df_trainset, df_testset)
     
     # Get training samples
-    X_train, y_train = extract_samples(df_trainset, df_folder_structure)
+    X_train, y_train = get_training_samples(df_trainset, df_folder_structure)
     
     # Get test samples
-    X_test, y_test = extract_samples(df_testset, df_folder_structure)
+    X_test, y_test = get_test_samples(df_testset, df_folder_structure)
     
     # Train model
     clf = train_classifier(X_train, y_train)
@@ -507,7 +549,7 @@ def main():
     get_results(clf, X_train, y_train, X_test, y_test)
 
     # End of script
-    print('\nEnd' + '-'*40)
+    print('\n'*3 + 'End' + '-'*47)
     
     
 if __name__ == '__main__':
