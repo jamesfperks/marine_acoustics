@@ -30,7 +30,7 @@ N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
 #SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [1,2,3,4]
+TRAINING_SITES = [1,2,3]
 
 # Indexes of call types for training
 TRAINING_CALL_TYPES = [0]    
@@ -510,11 +510,9 @@ def calculate_confusion_matrix(X_test, y_test, clf):
     return tn, fp, fn, tp
 
 
-def main():
-    # Start of script
-    print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
-    print('An annotated library of Antarctic Blue and Fin Whale sounds.\n')
-
+def run():
+    """Executes script."""
+    
     # Get folder structure
     df_folder_structure = get_folder_structure()
     
@@ -547,10 +545,25 @@ def main():
     
     # Print results
     get_results(clf, X_train, y_train, X_test, y_test)
-
-    # End of script
-    print('\n'*3 + 'End' + '-'*47)
     
+    
+
+def main():
+    # Start of script
+    print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
+    print('An annotated library of Antarctic Blue and Fin Whale sounds.\n')
+
+    # Run and time script
+    start = time.time()
+    run()
+    end = time.time()
+    
+    # End of script
+    print('\n'*2 + f'Total runtime: {end-start:0.1f} seconds.\n' + '-'*47 + 'End')
+          
+          
+          #'\n'*2 + 'End' + '-'*47)
     
 if __name__ == '__main__':
     main()
+    
