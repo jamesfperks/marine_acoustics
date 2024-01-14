@@ -27,17 +27,17 @@ STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
 STFT_OVERLAP = 75      # STFT window overlap (%)
 N_MFCC = 12             # no. of mfccs to calculate
 N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
-#SEED = 12345            # Set random seed
+SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [1,2,3]
+TRAINING_SITES = [1]
 
 # Indexes of call types for training
-TRAINING_CALL_TYPES = [0]    
+TRAINING_CALL_TYPES = [2]    
  
 # Indexes of sites for testing
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = [6]
+TEST_SITES = [1]
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
@@ -287,6 +287,7 @@ def balance_dataset(samples):
     background_samples = samples[samples[:,-1] == 0]
     
     # Randomise sample order
+    np.random.seed(SEED)
     np.random.shuffle(whale_samples)
     np.random.shuffle(background_samples)
     
