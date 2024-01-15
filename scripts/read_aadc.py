@@ -17,8 +17,9 @@ Anartctic Blue and Fin Whale sounds.
 
 
 # CONSTANTS
-# ----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
+SR = 250                # Resample rate in Hz
 FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
 FMAX = 35
@@ -30,20 +31,26 @@ N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
 SEED = 12345            # Set random seed
 
 # Indexes of sites for training
-TRAINING_SITES = [1]
+TRAINING_SITES = [1,2,3]
 
 # Indexes of call types for training
-TRAINING_CALL_TYPES = [2]    
+TRAINING_CALL_TYPES = [0]    
  
 # Indexes of sites for testing
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = [1]
+TEST_SITES = [6]
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
 TEST_CALL_TYPES = []
 
-#--------------------------------------------------------------
+#------------------------------------------------------------------------------
+# CALCULATED CONSTANTS (DO NOT CHANGE)
+#------------------------------------------------------------------------------
+FRAME_LENGTH = round(SR * FRAME_DURATION / 1000)    # frame length (samples)
+HOP_LENGTH = round(FRAME_LENGTH *(100-FRAME_OVERLAP)/100) # hoplength (samples)
+
+#------------------------------------------------------------------------------
 
 
 def get_folder_structure():
@@ -158,7 +165,8 @@ def read_log(site, call_type, df_folder_structure):
 
 
 def read_audio(site, wav_filename, df_folder_structure):
-    """Read audio and sample rate and normalise given a .wav filename."""
+    """Read, resample and normalise the given .wav file. Return the resampled
+    audio along with the default sample rate."""
     
     # Truncated redundant .wav filenames to match the G64 2015 folder
     if site == 'G64 2015':
@@ -169,25 +177,24 @@ def read_audio(site, wav_filename, df_folder_structure):
     site_folder = df_folder_structure.loc[site, 'Folder'][:-1]
     wav_filepath = DATA_FILEPATH + '/' + site_folder + '/wav/' + wav_filename
     
-    # Read entire mono .wav file using default sampling rate
-    y, sr = librosa.load(wav_filepath, sr=None, duration=None)
+    # Read entire mono .wav file and resample to preset global sample rate
+    y, sr = librosa.load(wav_filepath, sr=SR)
     
     # Normalise to [-1, 1]
     y = librosa.util.normalize(y)
     
-    return y, sr
-
-
-def calculate_mfccs(y, sr):
-    """Split data into DFT windows and compute MFCCs for each window."""
+    # Store the default sample rate
+    sr_default = librosa.get_samplerate(wav_filepath)
     
-    # Calculate frame size and overlap in samples
-    FRAME_LENGTH = sr * FRAME_DURATION // 1000
-    HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100
+    return y, sr_default
+
+
+def calculate_mfccs(y):
+    """Split data into DFT windows and compute MFCCs for each window."""
     
     # Calculate MFCCs
     mfccs = librosa.feature.mfcc(y=y,
-                                 sr=sr,
+                                 sr=SR,
                                  n_mfcc=N_MFCC,
                                  n_fft=FRAME_LENGTH,
                                  hop_length=HOP_LENGTH,
@@ -217,11 +224,11 @@ def calculate_stft(y, sr):
     return S_db
 
 
-def extract_features(y, sr):
+def extract_features(y):
     """Frame data and extract features for each frame."""
     
     # Calculate MFCCs
-    mfccs = calculate_mfccs(y, sr)
+    mfccs = calculate_mfccs(y)
     
     # Calculate STFT and split into frame
     #stft = calculate_stft(y, sr)
@@ -232,12 +239,8 @@ def extract_features(y, sr):
     return y_features
 
 
-def index2frame(time_indexes, sr):
+def index2frame(time_indexes):
     """Convert time log indexes to frame indexes."""
-
-    # Calculate frame size and overlap in samples
-    FRAME_LENGTH = sr * FRAME_DURATION // 1000
-    HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100
     
     # Frame index of the last frame that the sample is in
     frame_indexes = np.apply_along_axis(librosa.samples_to_frames,
@@ -247,7 +250,7 @@ def index2frame(time_indexes, sr):
                                         n_fft=FRAME_LENGTH)
     
     # Deal with negative indexes caused by librosa n_fft offset
-    frame_indexes[frame_indexes<-0] = 0
+    frame_indexes[frame_indexes<0] = 0
     
     # Check
     for idx in frame_indexes.flatten():
@@ -258,15 +261,26 @@ def index2frame(time_indexes, sr):
     return frame_indexes
 
 
-def label_features(y_features, sr, logs):
+def get_time_indexes(logs, sr_default):
+    """Read the call log time stamps and calculate the index of each call
+    for the resampled audio."""
+    
+    unsampled_indexes = logs[['Beg File Samp (samples)',
+                                   'End File Samp (samples)']].to_numpy() - 1
+    
+    time_indexes = np.rint(SR*unsampled_indexes/sr_default)
+    
+    return time_indexes
+
+
+def label_features(y_features, logs, sr_default):
     """Label feature vectors as 1 for 'whale' or 0 for 'background'."""
     
-    time_indexes = logs[['Beg File Samp (samples)',
-                          'End File Samp (samples)']].to_numpy() - 1
-    
+    # Get the sample indexes of start/end of whale calls
+    time_indexes = get_time_indexes(logs, sr_default)
     
     # Convert time indexes to frame indexes
-    frame_indexes = index2frame(time_indexes, sr)
+    frame_indexes = index2frame(time_indexes)
     
     # For each annotation, label corresponding frames 1 if "whale", else 0 
     feature_labels = np.zeros(y_features.shape[0])  
@@ -341,13 +355,13 @@ def extract_samples(df_data_summary, df_folder_structure):
         for wavfile, logs in gb_wavfile:
             
             # Read in audio
-            y, sr = read_audio(site, wavfile, df_folder_structure)
+            y, sr_default = read_audio(site, wavfile, df_folder_structure)
             
             # Frame and extract features
-            y_features = extract_features(y, sr)
+            y_features = extract_features(y)
             
             # Label features
-            y_labelled_features = label_features(y_features, sr, logs)
+            y_labelled_features = label_features(y_features, logs, sr_default)
             
             # add samples to sample set
             sample_set.extend(y_labelled_features)
