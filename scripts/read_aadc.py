@@ -18,17 +18,25 @@ Anartctic Blue and Fin Whale sounds.
 
 # CONSTANTS
 # -----------------------------------------------------------------------------
+
+# General Constants
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
+SEED = 12345            # Set random seed
 SR = 250                # Resample rate in Hz
+FEATURES = 'STFT'       # Feature representation [MFCC, STFT]
+
+
+# STFT Window Constants
 FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
-FMAX = 35
-FMIN = 12
-STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
-STFT_OVERLAP = 75      # STFT window overlap (%)
+FMAX = 35               # Frequency lower bound used in MFCC, STFT features
+FMIN = 12               # Frequency upper bound used in MFCC, STFT features
+
+
+# MFCC Constants
 N_MFCC = 12             # no. of mfccs to calculate
 N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
-SEED = 12345            # Set random seed
+
 
 # Indexes of sites for training
 TRAINING_SITES = [1,2,3]
@@ -52,6 +60,19 @@ HOP_LENGTH = round(FRAME_LENGTH *(100-FRAME_OVERLAP)/100) # hoplength (samples)
 
 #------------------------------------------------------------------------------
 
+
+def set_global_stft_freq_range():
+    """Return indexes of STFT frequency bins which correspond to FMIN, FMAX"""
+    
+    global STFT_FMIN_IDX, STFT_FMAX_IDX
+    
+    # Calculate frequency bins
+    freqs = librosa.fft_frequencies(sr=SR, n_fft=FRAME_LENGTH)
+    
+    # Find index of closest frequency bin to FMIN, FMAX
+    STFT_FMIN_IDX = np.argmin(np.abs(freqs-FMIN))
+    STFT_FMAX_IDX = np.argmin(np.abs(freqs-FMAX))
+    
 
 def get_folder_structure():
     """Read the folder structure csv file and save as a pd dataframe."""
@@ -215,23 +236,24 @@ def calculate_stft(y):
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
     
     # Select frequency bin range for STFT
-    freqs = librosa.fft_frequencies(sr=SR, n_fft=FRAME_LENGTH)
-    S_db = S_db[:,FMIN:FMAX+1]
+    S_db = S_db[:,STFT_FMIN_IDX:STFT_FMAX_IDX+1]
        
     return S_db
 
 
 def extract_features(y):
-    """Frame data and extract features for each frame."""
+    """Frame data and extract features for each frame. (FRAMES X FEATURES)"""
     
-    # Calculate MFCCs
-    mfccs = calculate_mfccs(y)
+
+    if FEATURES == 'MFCC':
+        y_features = calculate_mfccs(y)   # Calculate MFCCs
+        
+    elif FEATURES == 'STFT':
+        y_features = calculate_stft(y)    # Calculate STFT
     
-    # Calculate STFT and split into frame
-    stft = calculate_stft(y)
-    
-    # Return feature vectors for each frame
-    y_features = stft
+    else:
+        raise NotImplementedError('Feature representation chosen ' 
+                                        'is not implemented', FEATURES)
        
     return y_features
 
@@ -460,8 +482,8 @@ def print_dataset_summary(df_trainset, df_testset):
     train_percent = round(100*train_tot/(train_tot + test_tot))
     test_percent = round(100*test_tot/(train_tot + test_tot))
     
-    # Dataset summary
-    print('\n'*2 + '-'*50 + '\nDATASET SUMMARY\n' + '-'*50)
+    # Train/test header
+    print('\n'*2 + '-'*50 + '\nTRAINING AND TEST SET SELECTION\n' + '-'*50)
     
     # Print training set summary
     print('\n' + f'\nTraining set: ({train_tot})\n'
@@ -471,9 +493,15 @@ def print_dataset_summary(df_trainset, df_testset):
     print('\n'*2 + f'\nTest set: ({test_tot})\n'
           + '-'*30 + f'\n{df_testset}')
     
+    # Dataset summary header
+    print('\n'*2 + '-'*50 + '\nDATASET SUMMARY\n' + '-'*50)
+    
     # Train/test ratio printout
-    print('\n'*2 + 'Percentage split train/test is '
+    print('\n'*2 + '  - Percentage split train/test is ' + 
           f'{train_percent}/{test_percent}.\n')
+    
+    # Feature extraction method
+    print(f'  - Feature extraction method: {FEATURES}')
     
     
 def train_classifier(X_train, y_train):
@@ -525,6 +553,9 @@ def calculate_confusion_matrix(X_test, y_test, clf):
 def run():
     """Executes script."""
     
+    # Set any global variables
+    set_global_stft_freq_range() 
+    
     # Get folder structure
     df_folder_structure = get_folder_structure()
     
@@ -558,7 +589,6 @@ def run():
     # Print results
     get_results(clf, X_train, y_train, X_test, y_test)
     
-    
 
 def main():
     # Start of script
@@ -573,8 +603,6 @@ def main():
     # End of script
     print('\n'*2 + f'Total runtime: {end-start:0.1f} seconds.\n' + '-'*47 + 'End')
           
-          
-          #'\n'*2 + 'End' + '-'*47)
     
 if __name__ == '__main__':
     main()
