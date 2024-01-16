@@ -23,7 +23,7 @@ Anartctic Blue and Fin Whale sounds.
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
 SEED = 12345            # Set random seed
 SR = 250                # Resample rate in Hz
-FEATURES = 'STFT'       # Feature representation [MFCC, STFT]
+FEATURES = 'MEL'       # Feature representation [MFCC, STFT, MEL]
 
 
 # STFT Window Constants
@@ -241,6 +241,25 @@ def calculate_stft(y):
     return S_db
 
 
+def calculate_melspectrogram(y):
+    """Compute the mel-spectrogram and return a vector for each frame."""
+    
+    # mel-power spectrogram of y
+    D = librosa.feature.melspectrogram(y=y,
+                                       sr=SR,
+                                       n_fft=FRAME_LENGTH,
+                                       hop_length=HOP_LENGTH,
+                                       n_mels=N_MELS,
+                                       fmin=FMIN,
+                                       fmax=FMAX)
+    
+    
+    # mel-power spectrogram in dB
+    S_db = librosa.power_to_db(D, ref=np.max).T
+    
+    return S_db
+
+
 def extract_features(y):
     """Frame data and extract features for each frame. (FRAMES X FEATURES)"""
     
@@ -250,6 +269,9 @@ def extract_features(y):
         
     elif FEATURES == 'STFT':
         y_features = calculate_stft(y)    # Calculate STFT
+        
+    elif FEATURES == 'MEL':
+        y_features = calculate_melspectrogram(y)  # Calculate mel-spectrogram
     
     else:
         raise NotImplementedError('Feature representation chosen ' 
