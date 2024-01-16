@@ -23,7 +23,7 @@ SR = 250                # Resample rate in Hz
 FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
 FMAX = 35
-FMIN = 10
+FMIN = 12
 STFT_WINDOW_DURATION = 200   # STFT window duration in milliseconds
 STFT_OVERLAP = 75      # STFT window overlap (%)
 N_MFCC = 12             # no. of mfccs to calculate
@@ -38,7 +38,7 @@ TRAINING_CALL_TYPES = [0]
  
 # Indexes of sites for testing
 # [] empty brace defaults to using all sites not used in training
-TEST_SITES = [6]
+TEST_SITES = [8]
 
 # Indexes of call types for testing
 # [] empty brace defaults to using the same call type as trained on
@@ -205,14 +205,8 @@ def calculate_mfccs(y):
     return mfccs
     
 
-def calculate_stft(y, sr):
+def calculate_stft(y):
     """Compute STFT and split data into frames."""
-    
-    # Calculate frame size and overlap in samples
-    FRAME_LENGTH = sr * FRAME_DURATION // 1000
-    HOP_LENGTH = FRAME_LENGTH * (100-FRAME_OVERLAP) // 100
-    STFT_WINDOW_LENGTH = sr * STFT_WINDOW_DURATION // 1000
-    STFT_HOP_LENGTH = STFT_WINDOW_LENGTH * (100-FRAME_OVERLAP) // 100
     
     # STFT of y
     D = librosa.stft(y, n_fft=FRAME_LENGTH, hop_length=HOP_LENGTH)
@@ -220,7 +214,10 @@ def calculate_stft(y, sr):
     # STFT in dB
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
     
-                
+    # Select frequency bin range for STFT
+    freqs = librosa.fft_frequencies(sr=SR, n_fft=FRAME_LENGTH)
+    S_db = S_db[:,FMIN:FMAX+1]
+       
     return S_db
 
 
@@ -231,10 +228,10 @@ def extract_features(y):
     mfccs = calculate_mfccs(y)
     
     # Calculate STFT and split into frame
-    #stft = calculate_stft(y, sr)
+    stft = calculate_stft(y)
     
     # Return feature vectors for each frame
-    y_features = mfccs
+    y_features = stft
        
     return y_features
 
