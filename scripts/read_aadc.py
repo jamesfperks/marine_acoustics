@@ -1,6 +1,7 @@
 import os
 import time
 import librosa
+import pywt
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -23,19 +24,23 @@ Anartctic Blue and Fin Whale sounds.
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
 SEED = 12345            # Set random seed
 SR = 250                # Resample rate in Hz
-FEATURES = 'MEL'       # Feature representation [MFCC, STFT, MEL]
+FEATURES = 'CWT'       # Feature representation [MFCC, STFT, MEL, CWT]
 
 
 # STFT Window Constants
 FRAME_DURATION = 1000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50      # Frame overlap (%)
 FMAX = 35               # Frequency lower bound used in MFCC, STFT features
-FMIN = 12               # Frequency upper bound used in MFCC, STFT features
+FMIN = 18               # Frequency upper bound used in MFCC, STFT features
 
 
 # MFCC Constants
 N_MFCC = 12             # no. of mfccs to calculate
 N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
+
+
+# Wavelet Constants
+WAVELET = 'morl'    # wavelet type: morlet
 
 
 # Indexes of sites for training
@@ -260,6 +265,68 @@ def calculate_melspectrogram(y):
     return S_db
 
 
+def calculate_cwt(y):
+    """Compute the cwt and return a vector for each frame."""
+    
+    # Choose wavelet pseudo frequencies
+    desired_freqs = np.arange(FMIN, FMAX+1, 1)
+    scales = frequency2scale(desired_freqs)
+    
+    # Compute continuous wavelet transform
+    wavelet_coeffs, wavelet_freqs = apply_cwt(y, scales)
+    
+    cwt = frame_data(wavelet_coeffs.T)
+    
+    cwt = np.mean(cwt, axis=1)
+    
+    return cwt
+
+
+def frame_data(data):
+    """
+    Slice 1D array into frames with a given overlap: (n_frames x frame_length)
+    """
+    
+    frame_view = librosa.util.frame(data,
+                                    frame_length=FRAME_LENGTH,
+                                    hop_length=HOP_LENGTH,
+                                    axis=0)
+    
+    return frame_view
+
+
+def apply_cwt(y, scales):
+    """Apply cwt to a 1D array"""
+    
+    # Compute continuous wavelet transform
+    wavelet_coeffs, wavelet_freqs = pywt.cwt(y,
+                                             scales,
+                                             WAVELET,
+                                             sampling_period=1/SR)
+
+    return wavelet_coeffs, wavelet_freqs
+    
+
+def scale2frequency(scales):
+    """Convert from cwt scale to to pseudo-frequency"""
+
+    # pywt function returns normalised frequency so need to multiply by sr
+    freqs = pywt.scale2frequency(WAVELET, scales) * SR
+
+    return freqs
+
+
+def frequency2scale(desired_freqs):
+    """Convert from desired frequencies to a cwt scale"""
+
+    # pywt function input is normalised frequency so need to normalise by sr
+    normalised_freqs = desired_freqs / SR
+    
+    freqs = pywt.scale2frequency(WAVELET, normalised_freqs)
+
+    return freqs
+
+
 def extract_features(y):
     """Frame data and extract features for each frame. (FRAMES X FEATURES)"""
     
@@ -272,6 +339,9 @@ def extract_features(y):
         
     elif FEATURES == 'MEL':
         y_features = calculate_melspectrogram(y)  # Calculate mel-spectrogram
+        
+    elif FEATURES == 'CWT':
+        y_features = calculate_cwt(y)   # Calculate cwt
     
     else:
         raise NotImplementedError('Feature representation chosen ' 
@@ -340,6 +410,7 @@ def balance_dataset(samples):
     # Split into classes
     whale_samples = samples[samples[:,-1] == 1]
     background_samples = samples[samples[:,-1] == 0]
+    print(f'\nNumber of whale call samples: {whale_samples.shape}\nNumber of background samples: {background_samples.shape}\n')
     
     # Randomise sample order
     np.random.seed(SEED)
@@ -412,6 +483,7 @@ def extract_samples(df_data_summary, df_folder_structure):
     
     # Balance and randomise samples
     balanced_samples = balance_dataset(samples)
+    print('\n',balanced_samples.shape, '\n')
     
     # Split sample vector
     X, y = split_sample_vector(balanced_samples)
