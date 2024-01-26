@@ -1,3 +1,12 @@
+"""
+Automated detection of Antarctic Blue and Fin Whale sounds using 
+the Australian Antarctic Data Centre Annotated Library.
+
+Author: James Perks
+Email: jamesperks@outlook.com
+
+"""
+
 import os
 import time
 import librosa
@@ -8,62 +17,8 @@ from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
+from marine_acoustics import settings as s
 
-
-
-"""
-Read the Australian Antarctic Data Centre Annotated Library of 
-Anartctic Blue and Fin Whale sounds.
-"""
-
-
-# CONSTANTS
-# -----------------------------------------------------------------------------
-
-# General Constants
-DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
-SEED = 12345            # Set random seed
-SR = 250                # Resample rate in Hz
-FEATURES = 'CWT'       # Feature representation [MFCC, STFT, MEL, CWT]
-
-
-# STFT Window Constants
-FRAME_DURATION = 1000    # Frame duration in milliseconds
-FRAME_OVERLAP = 50      # Frame overlap (%)
-FMAX = 35               # Frequency lower bound used in MFCC, STFT features
-FMIN = 18               # Frequency upper bound used in MFCC, STFT features
-
-
-# MFCC Constants
-N_MFCC = 12             # no. of mfccs to calculate
-N_MELS = 32              # no. Mel bands used in mfcc calc (default 128)
-
-
-# Wavelet Constants
-WAVELET = 'morl'    # wavelet type: morlet
-
-
-# Indexes of sites for training
-TRAINING_SITES = [1,2,3]
-
-# Indexes of call types for training
-TRAINING_CALL_TYPES = [0]    
- 
-# Indexes of sites for testing
-# [] empty brace defaults to using all sites not used in training
-TEST_SITES = [8]
-
-# Indexes of call types for testing
-# [] empty brace defaults to using the same call type as trained on
-TEST_CALL_TYPES = []
-
-#------------------------------------------------------------------------------
-# CALCULATED CONSTANTS (DO NOT CHANGE)
-#------------------------------------------------------------------------------
-FRAME_LENGTH = round(SR * FRAME_DURATION / 1000)    # frame length (samples)
-HOP_LENGTH = round(FRAME_LENGTH *(100-FRAME_OVERLAP)/100) # hoplength (samples)
-
-#------------------------------------------------------------------------------
 
 
 def set_global_stft_freq_range():
@@ -72,17 +27,17 @@ def set_global_stft_freq_range():
     global STFT_FMIN_IDX, STFT_FMAX_IDX
     
     # Calculate frequency bins
-    freqs = librosa.fft_frequencies(sr=SR, n_fft=FRAME_LENGTH)
+    freqs = librosa.fft_frequencies(sr=s.SR, n_fft=s.FRAME_LENGTH)
     
     # Find index of closest frequency bin to FMIN, FMAX
-    STFT_FMIN_IDX = np.argmin(np.abs(freqs-FMIN))
-    STFT_FMAX_IDX = np.argmin(np.abs(freqs-FMAX))
+    STFT_FMIN_IDX = np.argmin(np.abs(freqs-s.FMIN))
+    STFT_FMAX_IDX = np.argmin(np.abs(freqs-s.FMAX))
     
 
 def get_folder_structure():
     """Read the folder structure csv file and save as a pd dataframe."""
     
-    csv_filepath = DATA_FILEPATH + '/01-Documentation/folderStructure.csv'
+    csv_filepath = s.DATA_FILEPATH + '/01-Documentation/folderStructure.csv'
     df = pd.read_csv(csv_filepath, index_col=0)
     df.index.name = None
       
@@ -142,7 +97,7 @@ def get_log_filepath(site, call_type, df_folder_structure):
     
     log_header = call_type_2_log_header(call_type)
     rel_filepath = df_folder_structure.loc[site, ['Folder', log_header]].str.cat()
-    log_filepath = DATA_FILEPATH + '/' + rel_filepath
+    log_filepath = s.DATA_FILEPATH + '/' + rel_filepath
     
     return log_filepath
 
@@ -201,10 +156,10 @@ def read_audio(site, wav_filename, df_folder_structure):
     
     # File path to .wav file
     site_folder = df_folder_structure.loc[site, 'Folder'][:-1]
-    wav_filepath = DATA_FILEPATH + '/' + site_folder + '/wav/' + wav_filename
+    wav_filepath = s.DATA_FILEPATH + '/' + site_folder + '/wav/' + wav_filename
     
     # Read entire mono .wav file and resample to preset global sample rate
-    y, sr = librosa.load(wav_filepath, sr=SR)
+    y, sr = librosa.load(wav_filepath, sr=s.SR)
     
     # Normalise to [-1, 1]
     y = librosa.util.normalize(y)
@@ -220,13 +175,13 @@ def calculate_mfccs(y):
     
     # Calculate MFCCs
     mfccs = librosa.feature.mfcc(y=y,
-                                 sr=SR,
-                                 n_mfcc=N_MFCC,
-                                 n_fft=FRAME_LENGTH,
-                                 hop_length=HOP_LENGTH,
-                                 n_mels=N_MELS,
-                                 fmin=FMIN,
-                                 fmax=FMAX).T
+                                 sr=s.SR,
+                                 n_mfcc=s.N_MFCC,
+                                 n_fft=s.FRAME_LENGTH,
+                                 hop_length=s.HOP_LENGTH,
+                                 n_mels=s.N_MELS,
+                                 fmin=s.FMIN,
+                                 fmax=s.FMAX).T
     
     return mfccs
     
@@ -235,7 +190,7 @@ def calculate_stft(y):
     """Compute STFT and split data into frames."""
     
     # STFT of y
-    D = librosa.stft(y, n_fft=FRAME_LENGTH, hop_length=HOP_LENGTH)
+    D = librosa.stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH)
     
     # STFT in dB
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
@@ -251,12 +206,12 @@ def calculate_melspectrogram(y):
     
     # mel-power spectrogram of y
     D = librosa.feature.melspectrogram(y=y,
-                                       sr=SR,
-                                       n_fft=FRAME_LENGTH,
-                                       hop_length=HOP_LENGTH,
-                                       n_mels=N_MELS,
-                                       fmin=FMIN,
-                                       fmax=FMAX)
+                                       sr=s.SR,
+                                       n_fft=s.FRAME_LENGTH,
+                                       hop_length=s.HOP_LENGTH,
+                                       n_mels=s.N_MELS,
+                                       fmin=s.FMIN,
+                                       fmax=s.FMAX)
     
     
     # mel-power spectrogram in dB
@@ -269,7 +224,7 @@ def calculate_cwt(y):
     """Compute the cwt and return a vector for each frame."""
     
     # Choose wavelet pseudo frequencies
-    desired_freqs = np.arange(FMIN, FMAX+1, 1)
+    desired_freqs = np.arange(s.FMIN, s.FMAX+1, 1)
     scales = frequency2scale(desired_freqs)
     
     # Compute continuous wavelet transform
@@ -288,8 +243,8 @@ def frame_data(data):
     """
     
     frame_view = librosa.util.frame(data,
-                                    frame_length=FRAME_LENGTH,
-                                    hop_length=HOP_LENGTH,
+                                    frame_length=s.FRAME_LENGTH,
+                                    hop_length=s.HOP_LENGTH,
                                     axis=0)
     
     return frame_view
@@ -301,8 +256,8 @@ def apply_cwt(y, scales):
     # Compute continuous wavelet transform
     wavelet_coeffs, wavelet_freqs = pywt.cwt(y,
                                              scales,
-                                             WAVELET,
-                                             sampling_period=1/SR)
+                                             s.WAVELET,
+                                             sampling_period=1/s.SR)
 
     return wavelet_coeffs, wavelet_freqs
     
@@ -311,7 +266,7 @@ def scale2frequency(scales):
     """Convert from cwt scale to to pseudo-frequency"""
 
     # pywt function returns normalised frequency so need to multiply by sr
-    freqs = pywt.scale2frequency(WAVELET, scales) * SR
+    freqs = pywt.scale2frequency(s.WAVELET, scales) * s.SR
 
     return freqs
 
@@ -320,32 +275,32 @@ def frequency2scale(desired_freqs):
     """Convert from desired frequencies to a cwt scale"""
 
     # pywt function input is normalised frequency so need to normalise by sr
-    normalised_freqs = desired_freqs / SR
+    normalised_freqs = desired_freqs / s.SR
     
-    freqs = pywt.scale2frequency(WAVELET, normalised_freqs)
+    freqs = pywt.scale2frequency(s.WAVELET, normalised_freqs)
 
     return freqs
 
 
 def extract_features(y):
-    """Frame data and extract features for each frame. (FRAMES X FEATURES)"""
+    """Frame data and extract features for each frame. (FRAMES X s.FEATURES)"""
     
 
-    if FEATURES == 'MFCC':
+    if s.FEATURES == 'MFCC':
         y_features = calculate_mfccs(y)   # Calculate MFCCs
         
-    elif FEATURES == 'STFT':
+    elif s.FEATURES == 'STFT':
         y_features = calculate_stft(y)    # Calculate STFT
         
-    elif FEATURES == 'MEL':
+    elif s.FEATURES == 'MEL':
         y_features = calculate_melspectrogram(y)  # Calculate mel-spectrogram
         
-    elif FEATURES == 'CWT':
+    elif s.FEATURES == 'CWT':
         y_features = calculate_cwt(y)   # Calculate cwt
     
     else:
         raise NotImplementedError('Feature representation chosen ' 
-                                        'is not implemented', FEATURES)
+                                        'is not implemented', s.FEATURES)
        
     return y_features
 
@@ -357,8 +312,8 @@ def index2frame(time_indexes):
     frame_indexes = np.apply_along_axis(librosa.samples_to_frames,
                                         axis=0,
                                         arr=time_indexes,
-                                        hop_length=HOP_LENGTH,
-                                        n_fft=FRAME_LENGTH)
+                                        hop_length=s.HOP_LENGTH,
+                                        n_fft=s.FRAME_LENGTH)
     
     # Deal with negative indexes caused by librosa n_fft offset
     frame_indexes[frame_indexes<0] = 0
@@ -379,7 +334,7 @@ def get_time_indexes(logs, sr_default):
     unsampled_indexes = logs[['Beg File Samp (samples)',
                                    'End File Samp (samples)']].to_numpy() - 1
     
-    time_indexes = np.rint(SR*unsampled_indexes/sr_default)
+    time_indexes = np.rint(s.SR*unsampled_indexes/sr_default)
     
     return time_indexes
 
@@ -413,7 +368,7 @@ def balance_dataset(samples):
     print(f'\nNumber of whale call samples: {whale_samples.shape}\nNumber of background samples: {background_samples.shape}\n')
     
     # Randomise sample order
-    np.random.seed(SEED)
+    np.random.seed(s.SEED)
     np.random.shuffle(whale_samples)
     np.random.shuffle(background_samples)
     
@@ -495,12 +450,12 @@ def select_training_set(df_annotations):
     """Select sites and call types to use for training."""
     
     # Training set annotation summary
-    df_trainset = df_annotations.iloc[TRAINING_SITES, TRAINING_CALL_TYPES]
+    df_trainset = df_annotations.iloc[s.TRAINING_SITES, s.TRAINING_CALL_TYPES]
     
     # Raise error if no annotations exist
     if not df_trainset.any(axis=None):
-        sites = df_annotations.index[TRAINING_SITES].to_list()
-        calls = df_annotations.columns[TRAINING_CALL_TYPES].to_list()
+        sites = df_annotations.index[s.TRAINING_SITES].to_list()
+        calls = df_annotations.columns[s.TRAINING_CALL_TYPES].to_list()
         raise ValueError('Chosen sites and call-types '
                           'contain zero annotations.', sites, calls)
     
@@ -526,18 +481,18 @@ def get_training_samples(df_trainset, df_folder_structure):
 def select_test_set(df_annotations):
     """Select sites and call types to use for testing."""
     
-    test_sites = TEST_SITES
-    test_call_types = TEST_CALL_TYPES
+    test_sites = s.TEST_SITES
+    test_call_types = s.TEST_CALL_TYPES
     
     # Default to using all non-training sites if unspecified []
     if len(test_sites) == 0:
         test_sites = list(range(0, 11))  
-        for site_idx in TRAINING_SITES:   
+        for site_idx in s.TRAINING_SITES:   
             test_sites.remove(site_idx)
     
     # Default to using training call types if unspecified []
     if len(test_call_types) == 0:
-        test_call_types = TRAINING_CALL_TYPES
+        test_call_types = s.TRAINING_CALL_TYPES
             
     # Test set summary
     df_testset = df_annotations.iloc[test_sites, test_call_types]
@@ -595,7 +550,7 @@ def print_dataset_summary(df_trainset, df_testset):
           f'{train_percent}/{test_percent}.\n')
     
     # Feature extraction method
-    print(f'  - Feature extraction method: {FEATURES}')
+    print(f'  - Feature extraction method: {s.FEATURES}')
     
     
 def train_classifier(X_train, y_train):
@@ -647,7 +602,7 @@ def calculate_confusion_matrix(X_test, y_test, clf):
 def run():
     """Executes script."""
     
-    # Set any global variables
+    # Set globals
     set_global_stft_freq_range() 
     
     # Get folder structure
