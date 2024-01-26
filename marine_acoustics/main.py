@@ -7,7 +7,7 @@ Email: jamesperks@outlook.com
 
 """
 
-import os
+
 import time
 import librosa
 import pywt
@@ -17,108 +17,14 @@ from tqdm import tqdm
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
+from marine_acoustics import intro, info
 from marine_acoustics import settings as s
-
-
-def get_folder_structure():
-    """Read the folder structure csv file and save as a pd dataframe."""
-    
-    csv_filepath = s.DATA_FILEPATH + '/01-Documentation/folderStructure.csv'
-    df = pd.read_csv(csv_filepath, index_col=0)
-    df.index.name = None
-      
-    return df
-
-
-def print_recording_sites(df_folder_structure):
-    """Print list of recording sites with indexes."""
-    
-    df = df_folder_structure
-    print('Recording sites:\n' + '-'*20)
-    for i in range(df.shape[0]):
-        print(f' {i}' + ' '*(4-len(str(i))) + df.index[i])
-        
-        
-def get_call_types():
-    """Create dataframe of call types."""
-    
-    call_types = ['Bm-A', 'Bm-B', 'Bm-Z', 'Bm-D',
-                       'Bp-20', 'Bp-20+', 'Bp-Downsweep', 'Unidentified']
-    
-    return call_types
-    
- 
-def print_call_types():
-    """Print all call types and the corresponding index."""
-
-    call_types = get_call_types()
-    print('\nCall types:\n' + '-'*20)
-    for i in range(len(call_types)):
-        print(f' {i}  ' + call_types[i])
-
-
-def get_total_annotation_count(df_folder_structure):
-    """
-    Return a dataframe containing the total number of annotations
-    for each site and call type.
-    """
-    
-    call_types = get_call_types()
-    annotation_dict = {}
-    
-    for call_type in call_types:
-        annotation_counts = []
-        
-        for site in df_folder_structure.index:
-            annotation_counts.append(count_annotations(df_folder_structure,
-                                                      site, call_type))
-          
-        annotation_dict[call_type] = annotation_counts
-    
-    return pd.DataFrame(annotation_dict, index=df_folder_structure.index)
-    
-
-def get_log_filepath(site, call_type, df_folder_structure):
-    """Return filepath to a log file given a site name and call type."""
-    
-    log_header = call_type_2_log_header(call_type)
-    rel_filepath = df_folder_structure.loc[site, ['Folder', log_header]].str.cat()
-    log_filepath = s.DATA_FILEPATH + '/' + rel_filepath
-    
-    return log_filepath
-
-
-def count_annotations(df_folder_structure, site, call_type):
-    """Count the number of call annotations for a given site and call type."""
-    
-    log_filepath = get_log_filepath(site, call_type, df_folder_structure)
-    
-    with open(log_filepath, "rb") as f:
-        n_annotations = sum(1 for line in f) - 1
-
-    return n_annotations
-    
-
-def call_type_2_log_header(call_type):
-    """Convert call-type string to the RavenFile name in the log headings."""
-    
-    call_2_log = {'Bm-A': 'Abw-A_RavenFile',
-                  'Bm-B': 'Abw-B_RavenFile',
-                  'Bm-Z': 'Abw-Z_RavenFile',
-                  'Bm-D': 'BmD_RavenFile',
-                  'Bp-20': 'Bp20_RavenFile',
-                  'Bp-20+': 'Bp20Plus_RavenFile',
-                  'Bp-Downsweep': 'BpDownsweep_RavenFile',
-                  'Unidentified': 'UnidentifiedCalls_RavenFile'
-                  }
-    
-    return call_2_log[call_type]
 
 
 def read_log(site, call_type, df_folder_structure):
     """Read log .txt file into a dataframe."""
     
-    log_filepath = get_log_filepath(site, call_type, df_folder_structure)
+    log_filepath = info.get_log_filepath(site, call_type, df_folder_structure)
     
     
     fields = ['Begin File', 'End File','Begin Time (s)', 'End Time (s)',
@@ -602,17 +508,14 @@ def calculate_confusion_matrix(X_test, y_test, clf):
 def run():
     """Executes script."""
     
-    # Get folder structure
-    df_folder_structure = get_folder_structure()
+    # Start script
+    intro.print_introduction()
     
-    # Print sites
-    print_recording_sites(df_folder_structure)
+    # Get data folder structure
+    df_folder_structure = info.get_folder_structure()
     
-    # Print call types
-    print_call_types()
-    
-    # Get total annotation count
-    df_annotations = get_total_annotation_count(df_folder_structure)
+    # Count total annotations
+    df_annotations = info.get_total_annotation_count(df_folder_structure)
     
     # Select training set
     df_trainset = select_training_set(df_annotations)
@@ -637,10 +540,7 @@ def run():
     
 
 def main():
-    # Start of script
-    print('-'*40 + f'\nRunning {os.path.basename(__file__)}\n' + '-'*40 + '\n')
-    print('An annotated library of Antarctic Blue and Fin Whale sounds.\n')
-
+    
     # Run and time script
     start = time.time()
     run()
