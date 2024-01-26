@@ -66,6 +66,12 @@ N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 WAVELET = 'morl'        # wavelet type: morlet
 
 
+# PRINTOUT CONSTANTS
+# -----------------------------------------------------------------------------
+HEADER_LEN = 50
+SUBHEADER_LEN = 30
+
+
 #------------------------------------------------------------------------------
 # CALCULATED CONSTANTS (DO NOT CHANGE)
 #------------------------------------------------------------------------------
