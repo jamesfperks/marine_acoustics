@@ -12,9 +12,18 @@ from marine_acoustics.data_processing import info
 def print_introduction():
     """Print the introduction."""
     
-    print('\n'*2 + '-'*s.HEADER_LEN + '\nMARINE BIOACOUSTICS: 4TH YEAR ENGINEERING PROJECT\n' + '-'*s.HEADER_LEN)
+    # Script starting header
+    print('\n'*2 + '-'*s.HEADER_LEN + 
+          '\nMARINE BIOACOUSTICS: 4TH YEAR ENGINEERING PROJECT\n' +
+          '-'*s.HEADER_LEN)
     
-    print('\nAn automated detector of Antarctic Blue and Fin Whale sounds.')
+    # Print project description
+    print('\nAn applied machine learning project to detect\n'
+          'Antarctic Blue and Fin Whale sounds.')
+    
+    
+    # Print dataset summary
+    print('\n' + '-'*s.HEADER_LEN + '\nDATASET SUMMARY\n' + '-'*s.HEADER_LEN)
     
     # Print all recording sites
     print_recording_sites()
