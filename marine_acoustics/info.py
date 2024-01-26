@@ -6,8 +6,9 @@ Annotated Library of Antarctic Blue and Fin Whale sounds.
 
 
 import pandas as pd
-from marine_acoustics import settings as s
 from marine_acoustics import read
+from marine_acoustics import settings as s
+
 
 def get_folder_structure():
     """Read the folder structure csv file and save as a pd dataframe."""

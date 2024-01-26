@@ -11,6 +11,8 @@ from marine_acoustics import settings as s
 def print_introduction():
     """Print the introduction."""
     
+    print('\n'*2 + '-'*s.HEADER_LEN + '\nMARINE BIOACOUSTICS: 4TH YEAR ENGINEERING PROJECT\n' + '-'*s.HEADER_LEN)
+    
     print('\nAn automated detector of Antarctic Blue and Fin Whale sounds.')
     
     # Print all recording sites
