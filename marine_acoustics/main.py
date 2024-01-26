@@ -20,20 +20,6 @@ from sklearn.metrics import confusion_matrix, classification_report
 from marine_acoustics import settings as s
 
 
-
-def set_global_stft_freq_range():
-    """Return indexes of STFT frequency bins which correspond to FMIN, FMAX"""
-    
-    global STFT_FMIN_IDX, STFT_FMAX_IDX
-    
-    # Calculate frequency bins
-    freqs = librosa.fft_frequencies(sr=s.SR, n_fft=s.FRAME_LENGTH)
-    
-    # Find index of closest frequency bin to FMIN, FMAX
-    STFT_FMIN_IDX = np.argmin(np.abs(freqs-s.FMIN))
-    STFT_FMAX_IDX = np.argmin(np.abs(freqs-s.FMAX))
-    
-
 def get_folder_structure():
     """Read the folder structure csv file and save as a pd dataframe."""
     
@@ -196,9 +182,23 @@ def calculate_stft(y):
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
     
     # Select frequency bin range for STFT
-    S_db = S_db[:,STFT_FMIN_IDX:STFT_FMAX_IDX+1]
-       
+    stft_fmin_idx, stft_fmax_idx = get_stft_freq_range()
+    S_db = S_db[:,stft_fmin_idx:stft_fmax_idx+1]
+           
     return S_db
+
+
+def get_stft_freq_range():
+    """Return indexes of STFT frequency bins which correspond to FMIN, FMAX"""
+    
+    # Calculate frequency bins
+    freqs = librosa.fft_frequencies(sr=s.SR, n_fft=s.FRAME_LENGTH)
+    
+    # Find index of closest frequency bin to FMIN, FMAX
+    stft_fmin_idx = np.argmin(np.abs(freqs-s.FMIN))
+    stft_fmax_idx = np.argmin(np.abs(freqs-s.FMAX))
+    
+    return stft_fmin_idx, stft_fmax_idx
 
 
 def calculate_melspectrogram(y):
@@ -601,9 +601,6 @@ def calculate_confusion_matrix(X_test, y_test, clf):
 
 def run():
     """Executes script."""
-    
-    # Set globals
-    set_global_stft_freq_range() 
     
     # Get folder structure
     df_folder_structure = get_folder_structure()

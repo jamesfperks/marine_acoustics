@@ -8,6 +8,7 @@ All global constants are defined here.
 
 """
 
+
 # GENERAL CONSTANTS
 # -----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
@@ -35,7 +36,7 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'MFCC'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'STFT'        # [MFCC, STFT, MEL, CWT]
 
 
 # FRAME DURATION AND OVERLAP
