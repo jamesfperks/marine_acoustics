@@ -6,7 +6,7 @@ Read the AADC dataset.
 
 import librosa
 import pandas as pd
-from marine_acoustics import settings as s
+from marine_acoustics.configuration import settings as s
 
 
 def get_log_filepath(site, call_type, df_folder_structure):

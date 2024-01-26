@@ -4,8 +4,9 @@ Begin the script and print an introduciton.
 """
 
 
-from marine_acoustics import info
-from marine_acoustics import settings as s
+from marine_acoustics.configuration import settings as s
+from marine_acoustics.data_processing import info
+
 
 
 def print_introduction():

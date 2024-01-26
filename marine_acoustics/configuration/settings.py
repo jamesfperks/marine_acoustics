@@ -36,7 +36,7 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'MFCC'        # [MFCC, STFT, MEL, CWT]
 
 
 # FRAME DURATION AND OVERLAP

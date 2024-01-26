@@ -9,7 +9,9 @@ Email: jamesperks@outlook.com
 
 
 import time
-from marine_acoustics import intro, info, select, sample, train, evaluate
+from marine_acoustics.configuration import intro, selector
+from marine_acoustics.data_processing import info, sample
+from marine_acoustics.model import train, evaluate
 
 
 def run():
@@ -25,13 +27,13 @@ def run():
     df_annotations = info.get_total_annotation_count(df_folder_structure)
     
     # Select training set
-    df_trainset = select.select_training_set(df_annotations)
+    df_trainset = selector.select_training_set(df_annotations)
     
     # Select test set
-    df_testset = select.select_test_set(df_annotations)
+    df_testset = selector.select_test_set(df_annotations)
     
     # Print training and test set summary
-    select.print_selection_summary(df_trainset, df_testset)
+    selector.print_selection_summary(df_trainset, df_testset)
     
     # Get training samples
     X_train, y_train = sample.get_training_samples(df_trainset, df_folder_structure)

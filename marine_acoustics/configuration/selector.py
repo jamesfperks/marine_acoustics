@@ -4,7 +4,7 @@ Select the training and test sets from the AADC dataset.
 """
 
 
-from marine_acoustics import settings as s
+from marine_acoustics.configuration import settings as s
 
 
 def select_training_set(df_annotations):

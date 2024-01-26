@@ -8,7 +8,7 @@ import librosa
 import pywt
 import numpy as np
 
-from marine_acoustics import settings as s
+from marine_acoustics.configuration import settings as s
 
 
 def extract_features(y):

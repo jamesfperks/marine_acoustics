@@ -7,8 +7,8 @@ Extract samples from the raw .wav files
 import time
 import numpy as np
 import pandas as pd
-from marine_acoustics import read, features, label
-from marine_acoustics import settings as s
+from marine_acoustics.configuration import settings as s
+from marine_acoustics.data_processing import read, features, label
 
 
 def get_training_samples(df_trainset, df_folder_structure):
