@@ -23,6 +23,7 @@ def label_features(y_features, logs, sr_default):
         whale_indexes = np.arange(start, end) # Non-inclusive end frame idx
         feature_labels[whale_indexes] = np.ones(len(whale_indexes))
     
+    # Append label to the end of the feature vector for each sample
     y_labelled_features = np.column_stack((y_features, feature_labels))
     
     return y_labelled_features

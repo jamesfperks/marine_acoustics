@@ -12,7 +12,7 @@ from marine_acoustics.configuration import settings as s
 
 
 def extract_features(y):
-    """Frame data and extract features for each frame. (FRAMES X s.FEATURES)"""
+    """Frame data and extract features for each frame. (FRAMES X FEATURES)"""
     
 
     if s.FEATURES == 'MFCC':
