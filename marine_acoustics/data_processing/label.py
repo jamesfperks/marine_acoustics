@@ -42,29 +42,14 @@ def get_call_indexes(logs, sr_default):
 
 
 def index2frame(call_indexes):
-    """Convert time log indexes to frame indexes."""
+    """Convert call start and end indexes to frame indexes."""
     
-    # # Frame index of the last frame that the sample is in
-    # frame_indexes = np.apply_along_axis(librosa.samples_to_frames,
-    #                                     axis=0,
-    #                                     arr=call_indexes,
-    #                                     hop_length=s.HOP_LENGTH,
-    #                                     n_fft=s.FRAME_LENGTH)
-    
-  
+    # Offset to account for frame centering in feature extraction
     offset = int(s.FRAME_LENGTH // 2)
 
     frame_indexes = np.asarray(np.floor((call_indexes + offset)//s.HOP_LENGTH),
                                dtype=int)
 
-    # # Deal with negative indexes caused by librosa n_fft offset
-    # frame_indexes[frame_indexes<0] = 0
-    
-    # # Check
-    # for idx in frame_indexes.flatten():
-    #     if idx < 0:
-    #         raise ValueError('Negative frame index calculated during sample '
-    #                          'index to frame index conversion.')
     
     return frame_indexes
 
