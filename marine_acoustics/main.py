@@ -36,7 +36,8 @@ def run():
     selector.print_selection_summary(df_trainset, df_testset)
     
     # Get training samples
-    X_train, y_train = sample.get_training_samples(df_trainset, df_folder_structure)
+    X_train, y_train = sample.get_training_samples(df_trainset,
+                                                   df_folder_structure)
     
     # Get test samples
     X_test, y_test = sample.get_test_samples(df_testset, df_folder_structure)
