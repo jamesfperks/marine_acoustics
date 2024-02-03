@@ -5,6 +5,7 @@ Extract samples from the raw .wav files
 
 
 import time
+import random
 import numpy as np
 import pandas as pd
 from marine_acoustics.configuration import settings as s
@@ -133,23 +134,30 @@ def extract_samples(site, gb_wavfile, df_folder_structure):
 def balance_dataset(samples):
     """Sub-sample the majority class to balance the dataset."""
     
-    # Split into classes
-    whale_samples = samples[samples[:,-1] == 1]
-    background_samples = samples[samples[:,-1] == 0]
+    labels = samples[:,-1]
     
-    # Randomise sample order
-    np.random.seed(s.SEED)
-    np.random.shuffle(whale_samples)
-    np.random.shuffle(background_samples)
+    whale_indexes = []
+    background_indexes = []
     
-    # Subsample the majority class
-    n_minority = min(len(whale_samples), len(background_samples))
-    balanced_whale = whale_samples[0:n_minority, :]
-    balanced_background = background_samples[0:n_minority, :]
+    # Split into whale and background indexes
+    for i in range(len(labels)):
+        if labels[i] == 1:
+            whale_indexes.append(i)
+        else:
+            background_indexes.append(i)
+       
+        
+    # Randomly sub-sample indexes from background to match n_whale samples
+    random.seed(s.SEED)
+    sampled_background_indexes = random.sample(background_indexes,
+                                               len(whale_indexes))
     
-    # Recombine and randomise samples from each class
-    balanced_samples = np.vstack((balanced_whale, balanced_background))
-    np.random.shuffle(balanced_samples)
+    # Recombine whale and background indexes preserving sample order
+    balanced_indexes = whale_indexes + sampled_background_indexes
+    balanced_indexes.sort()
+    
+    # Index samples using balanced indexes
+    balanced_samples = samples[balanced_indexes, :]
   
     return balanced_samples
 

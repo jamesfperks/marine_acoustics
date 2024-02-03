@@ -26,7 +26,7 @@ TEST_SITES = [8]                 # Indexes of sites for testing
 
 TEST_CALL_TYPES = []             # Indexes of call types for testing
 
-IS_TEST_BALANCED = False         # Balance the test sample set (True/False)
+IS_TEST_BALANCED = True         # Balance the test sample set (True/False)
 
 """
 Note for test set selection:
