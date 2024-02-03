@@ -4,43 +4,40 @@ Evaluate the model performance.
 """
 
 
-from sklearn.metrics import confusion_matrix
+from marine_acoustics.configuration import settings as s
+from marine_acoustics.model import metrics
 
 
 def get_results(clf, X_train, y_train, X_test, y_test):
-    """Calculate classification scoring metrics."""
-    
+    """Calculate and print classification scoring metrics."""
+        
     # Accuracy
     train_score = clf.score(X_train, y_train)
-    test_score = clf.score(X_test, y_test)
+    test_score = clf.score(X_test, y_test) 
     
+    # Class predictions
+    y_train_pred = clf.predict(X_train)
+    y_test_pred = clf.predict(X_test)
+       
     # Confusion matrix
-    c_matrix = calculate_confusion_matrix(X_test, y_test, clf)
+    c_matrix = metrics.calculate_confusion_matrix(y_test, y_test_pred)
     
     # Print results
     print_results(train_score, test_score, c_matrix)
-    
-    
-def calculate_confusion_matrix(X_test, y_test, clf):
-    """Caclulate and print confusion matrix."""
-    
-    y_pred = clf.predict(X_test)
-    c_matrix = confusion_matrix(y_test, y_pred)
-
-    return c_matrix
 
 
 def print_results(train_score, test_score, c_matrix):
     """Print classification scoring metrics."""
     
     # Results Header
-    print('\n'*2 + '-'*50 + '\nRESULTS\n' + '-'*50)
+    print('\n' + '-'*s.HEADER_LEN + '\nRESULTS\n' + '-'*s.HEADER_LEN)
     
     # Accuracy
-    print(f'\n  - Training: {train_score:.3f}\n  - Testing: {test_score:.3f}')
+    print('\n' + '\nAccuracy:\n' + '-'*s.SUBHEADER_LEN +
+          f'\n  - Training: {train_score:.3f}\n  - Testing: {test_score:.3f}')
     
     # Confusion Matrix                
-    print('\n' + '-'*0 + '\nConfusion Matrix:\n' + '-'*30 + 
+    print('\n' + '\nConfusion Matrix:\n' + '-'*s.SUBHEADER_LEN + 
           '\n   [TN FP]' + '-'*3 + f'{c_matrix[0]}' + 
           '\n   [FN TP]' + '-'*3 + f'{c_matrix[1]}')
     
