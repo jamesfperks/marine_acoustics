@@ -4,7 +4,7 @@ Train the model.
 """
 
 import time
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 def train_classifier(X_train, y_train):
@@ -13,7 +13,7 @@ def train_classifier(X_train, y_train):
     print('  - Training model...', end='')
     
     start = time.time()
-    clf = GradientBoostingClassifier().fit(X_train, y_train)
+    clf = HistGradientBoostingClassifier().fit(X_train, y_train)
     end = time.time()
     
     print(f'100% ({end-start:.1f} s)')
