@@ -45,7 +45,7 @@ def run():
     # Train model
     clf = train.train_classifier(X_train, y_train)
     
-    # Print results
+    # Evaluate model
     evaluate.get_results(clf, X_train, y_train, X_test, y_test)
     
 
