@@ -37,7 +37,7 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'MFCC'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'STFT'        # [MFCC, STFT, MEL, CWT]
 
 
 # FRAME DURATION AND OVERLAP
@@ -65,6 +65,11 @@ N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
 WAVELET = 'morl'        # wavelet type: morlet
+
+
+# EVALUATION CONSTANTS
+# -----------------------------------------------------------------------------
+MEDIAN_FILTER_SIZE = 5    # Size of 1D median filter kernel
 
 
 # PRINTOUT CONSTANTS
