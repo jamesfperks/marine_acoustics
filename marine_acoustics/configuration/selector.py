@@ -78,7 +78,7 @@ def print_selection_summary(df_trainset, df_testset):
     
     # Train/test ratio printout
     print('\n'*2 + '  - Percentage split train/test is ' + 
-          f'{train_percent}/{test_percent}.\n')
+          f'{train_percent}/{test_percent}\n')
     
     # Feature extraction method
     print(f'  - Feature extraction method: {s.FEATURES}')
