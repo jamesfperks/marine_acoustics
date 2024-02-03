@@ -15,8 +15,9 @@ from marine_acoustics.data_processing import read, features, label
 def get_training_samples(df_trainset, df_folder_structure):
     """Return extracted trainings samples and print time taken."""
     
-    print('\n'*2 + '-'*50 + '\nTRAINING PROGRESS\n' + '-'*50 + 
-          '\n  - Extracting trainings samples...', end='')
+    print('\n'*2 + '-'*s.HEADER_LEN + '\nTRAINING PROGRESS\n' +
+          '-'*s.HEADER_LEN + '\n'*2 + '  - Extracting trainings samples...',
+          end='')
     
 
     start = time.time()
@@ -25,7 +26,7 @@ def get_training_samples(df_trainset, df_folder_structure):
                                    is_train=True)
     end = time.time()
     
-    print(f'100% ({end-start:.1f} s)')
+    print(f'100% ({end-start:.1f} s)\n')
     
     return X_train, y_train
 
@@ -41,7 +42,7 @@ def get_test_samples(df_testset, df_folder_structure):
                                  is_train=False)
     end = time.time()
     
-    print(f'100% ({end-start:.1f} s)')
+    print(f'100% ({end-start:.1f} s)\n')
     
     return X_test, y_test
 
