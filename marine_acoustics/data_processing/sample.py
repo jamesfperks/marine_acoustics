@@ -19,7 +19,9 @@ def get_training_samples(df_trainset, df_folder_structure):
     
 
     start = time.time()
-    X_train, y_train = get_samples(df_trainset, df_folder_structure)
+    X_train, y_train = get_samples(df_trainset,
+                                   df_folder_structure,
+                                   is_train=True)
     end = time.time()
     
     print(f'100% ({end-start:.1f} s)')
@@ -33,7 +35,9 @@ def get_test_samples(df_testset, df_folder_structure):
     print('  - Extracting test samples...', end='')
     
     start = time.time()
-    X_test, y_test = get_samples(df_testset, df_folder_structure)
+    X_test, y_test = get_samples(df_testset,
+                                 df_folder_structure,
+                                 is_train=False)
     end = time.time()
     
     print(f'100% ({end-start:.1f} s)')
@@ -41,7 +45,7 @@ def get_test_samples(df_testset, df_folder_structure):
     return X_test, y_test
 
 
-def get_samples(df_selected_dataset, df_folder_structure):
+def get_samples(df_selected_dataset, df_folder_structure, is_train):
     """Extract labelled samples from .wav files."""
         
     # Sample from selected sites and call types
@@ -52,11 +56,12 @@ def get_samples(df_selected_dataset, df_folder_structure):
     # Create sample vector (n_samples x n_features)
     samples = np.vstack(sample_set)
     
-    # Balance and randomise samples
-    balanced_samples = balance_dataset(samples)
+    # Balance training samples and test samples (if selected)
+    if (is_train == True) or (s.IS_TEST_BALANCED == True):
+        samples = balance_dataset(samples)
     
     # Split sample vector
-    X, y = split_sample_vector(balanced_samples)
+    X, y = split_sample_vector(samples)
     
     return X, y
 

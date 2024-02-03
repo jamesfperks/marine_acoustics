@@ -3,7 +3,7 @@ Label audio frames as "background" or "whale".
 
 """
 
-import librosa
+
 import numpy as np
 from marine_acoustics.configuration import settings as s
 

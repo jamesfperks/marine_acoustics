@@ -26,6 +26,7 @@ TEST_SITES = [8]                 # Indexes of sites for testing
 
 TEST_CALL_TYPES = []             # Indexes of call types for testing
 
+IS_TEST_BALANCED = False         # Balance the test sample set (True/False)
 
 """
 Note for test set selection:
@@ -36,7 +37,7 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'MFCC'        # [MFCC, STFT, MEL, CWT]
 
 
 # FRAME DURATION AND OVERLAP
