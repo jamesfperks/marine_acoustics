@@ -18,7 +18,7 @@ SR = 250             # Resample rate in Hz
 
 # TRAIN/TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAINING_SITES = [1,2,3]         # Indexes of sites for training (E.g. [1,4])
+TRAINING_SITES = [3]         # Indexes of sites for training (E.g. [1,4])
 
 TRAINING_CALL_TYPES = [0]        # Indexes of call types for training
  
@@ -37,7 +37,7 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'CWT'        # [MFCC, STFT, MEL, CWT]
 
 
 # FRAME DURATION AND OVERLAP
@@ -48,8 +48,8 @@ FRAME_OVERLAP = 50       # Frame overlap (%)
 
 # FREQUENCY RANGE
 # -----------------------------------------------------------------------------
-FMAX = 35               # Frequency lower bound used in MFCC, STFT features
-FMIN = 18               # Frequency upper bound used in MFCC, STFT features
+FMAX = 30               # Frequency lower bound used in MFCC, STFT features
+FMIN = 20               # Frequency upper bound used in MFCC, STFT features
 
 
 # MFCC CONSTANTS
@@ -64,12 +64,21 @@ N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
 
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
-WAVELET = 'morl'        # wavelet type: morlet
+WAVELET = 'shan0.07-0.8'        # select wavelet
+CWT_FREQ_RES = 0.5          # Frequency resolution of cwt
+
+
+"""
+Examples of good wavelet choices:
+    
+'cmor25-2.0'           complex morlet (bandwidth = 25 centre freq = 2.0)
+'shan0.07-0.8'         shannon (bandwidth = 0.07 centre freq = 0.8)
+"""
 
 
 # EVALUATION CONSTANTS
 # -----------------------------------------------------------------------------
-MEDIAN_FILTER_SIZE = 5    # Size of 1D median filter kernel
+MEDIAN_FILTER_SIZE = 7    # Size of 1D median filter kernel
 
 
 # PRINTOUT CONSTANTS

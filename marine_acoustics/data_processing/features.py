@@ -102,30 +102,38 @@ def calculate_cwt(y):
     """Compute the cwt and return a vector for each frame."""
     
     # Choose wavelet pseudo frequencies
-    desired_freqs = np.arange(s.FMIN, s.FMAX+1, 1)
+    desired_freqs = np.arange(s.FMIN, s.FMAX+1, s.CWT_FREQ_RES)
     scales = frequency2scale(desired_freqs)
     
     # Compute continuous wavelet transform
     wavelet_coeffs, wavelet_freqs = apply_cwt(y, scales)
+    cwt = librosa.amplitude_to_db(np.abs(wavelet_coeffs), ref=np.max)
     
-    cwt = frame_data(wavelet_coeffs.T)
-    
-    cwt = np.mean(cwt, axis=1)
-    
-    return cwt
-
-
-def frame_data(data):
-    """
-    Slice 1D array into frames with a given overlap: (n_frames x frame_length)
-    """
-    
-    frame_view = librosa.util.frame(data,
+    # Pad cwt to match librosa frame offset in STFT/MFCC etc.
+    size = cwt.shape[1] + (s.FRAME_LENGTH//2)*2
+    cwt_padded = librosa.util.pad_center(cwt, size=size, axis=1)
+      
+    # Split coefficients into frames along sample axis
+    cwt_framed = librosa.util.frame(cwt_padded,
                                     frame_length=s.FRAME_LENGTH,
-                                    hop_length=s.HOP_LENGTH,
-                                    axis=0)
+                                    hop_length=s.HOP_LENGTH, axis=1)
     
-    return frame_view
+    # Average coeffs for each frame
+    cwt_avg = np.mean(cwt_framed, axis=2)
+ 
+    
+    return cwt_avg.T     # Transpose to match (n_frames x n_features)
+
+
+def frequency2scale(desired_freqs):
+    """Convert from desired frequencies to a cwt scale"""
+
+    # pywt function input is normalised frequency so need to normalise by sr
+    normalised_freqs = desired_freqs / s.SR
+    
+    freqs = pywt.scale2frequency(s.WAVELET, normalised_freqs)
+
+    return freqs
 
 
 def apply_cwt(y, scales):
@@ -138,24 +146,4 @@ def apply_cwt(y, scales):
                                              sampling_period=1/s.SR)
 
     return wavelet_coeffs, wavelet_freqs
-    
-
-def scale2frequency(scales):
-    """Convert from cwt scale to to pseudo-frequency"""
-
-    # pywt function returns normalised frequency so need to multiply by sr
-    freqs = pywt.scale2frequency(s.WAVELET, scales) * s.SR
-
-    return freqs
-
-
-def frequency2scale(desired_freqs):
-    """Convert from desired frequencies to a cwt scale"""
-
-    # pywt function input is normalised frequency so need to normalise by sr
-    normalised_freqs = desired_freqs / s.SR
-    
-    freqs = pywt.scale2frequency(s.WAVELET, normalised_freqs)
-
-    return freqs
 
