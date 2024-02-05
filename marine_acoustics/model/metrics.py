@@ -4,8 +4,9 @@ Calculate model performance metrics.
 """
 
 
+import matplotlib.pyplot as plt
 from scipy.signal import medfilt
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, RocCurveDisplay
 from marine_acoustics.configuration import settings as s
 
 
@@ -39,3 +40,17 @@ def calculate_confusion_matrix(y_true, y_pred):
 
     return c_matrix
 
+
+def plot_roc(y_test, y_test_pred_proba):
+    """Plot the ROC curve and return AUC."""
+    
+    # Plot ROC and calculate AUC
+    roc_display = RocCurveDisplay.from_predictions(y_test, y_test_pred_proba,
+                        name='HistGradientBoost', plot_chance_level=True)   
+    plt.title('Receiver Operating Characteristic (ROC)')
+    
+    auc = roc_display.roc_auc
+    
+    return auc
+    
+    
