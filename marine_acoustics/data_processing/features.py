@@ -6,6 +6,7 @@ Feature respresentations used to create a feature vector from .wav files.
 
 import librosa
 import pywt
+import opensmile
 import numpy as np
 
 from marine_acoustics.configuration import settings as s
@@ -26,6 +27,9 @@ def extract_features(y):
         
     elif s.FEATURES == 'CWT':
         y_features = calculate_cwt(y)   # Calculate cwt
+        
+    elif s.FEATURES == 'SMILE':
+        y_features = calculate_smile(y)   # extract openSMILE features
     
     else:
         raise NotImplementedError('Feature representation chosen ' 
@@ -146,4 +150,35 @@ def apply_cwt(y, scales):
                                              sampling_period=1/s.SR)
 
     return wavelet_coeffs, wavelet_freqs
+
+
+def calculate_smile(y):
+    """Frame data and extract openSMILE features for each frame."""
+    
+    # Pad cwt to match librosa frame offset in STFT/MFCC etc.
+    size = y.shape[0] + (s.FRAME_LENGTH//2)*2
+    y_padded = librosa.util.pad_center(y, size=size, axis=0)
+    
+    # Split into frames
+    y_frames = librosa.util.frame(y_padded,
+                                  frame_length=s.FRAME_LENGTH,
+                                  hop_length=s.HOP_LENGTH, axis=0)    
+
+    smile_features = np.apply_along_axis(extract_smile_feature_vector, 1, 
+                                         y_frames)
+   
+    return smile_features
+
+
+def extract_smile_feature_vector(y_frame):
+    """Extract smile feature vector for a single frame."""
+    
+    smile = opensmile.Smile(
+        feature_set=opensmile.FeatureSet.eGeMAPSv02,
+        feature_level=opensmile.FeatureLevel.Functionals,
+    )
+    
+    feature_vector = smile.process_signal(y_frame, s.SR).iloc[0].to_numpy()
+    
+    return feature_vector
 
