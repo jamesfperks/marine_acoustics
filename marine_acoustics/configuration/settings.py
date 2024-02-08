@@ -18,7 +18,7 @@ SR = 250             # Resample rate in Hz
 
 # TRAIN/TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAINING_SITES = [3]         # Indexes of sites for training (E.g. [1,4])
+TRAINING_SITES = [1,2,3]         # Indexes of sites for training (E.g. [1,4])
 
 TRAINING_CALL_TYPES = [0]        # Indexes of call types for training
  
@@ -37,19 +37,19 @@ Note for test set selection:
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'CWT'        # [MFCC, STFT, MEL, CWT]
+FEATURES = 'CWT'        # [MFCC, STFT, MEL, CWT, SMILE]
 
 
 # FRAME DURATION AND OVERLAP
 # -----------------------------------------------------------------------------
-FRAME_DURATION = 1000    # Frame duration in milliseconds
+FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50       # Frame overlap (%)
 
 
 # FREQUENCY RANGE
 # -----------------------------------------------------------------------------
-FMAX = 30               # Frequency lower bound used in MFCC, STFT features
-FMIN = 20               # Frequency upper bound used in MFCC, STFT features
+FMAX = 33               # Frequency lower bound used in MFCC, STFT features
+FMIN = 18               # Frequency upper bound used in MFCC, STFT features
 
 
 # MFCC CONSTANTS
@@ -59,13 +59,13 @@ N_MFCC = 12             # no. of mfccs to calculate
 
 # MEL CONSTANTS
 # -----------------------------------------------------------------------------
-N_MELS = 32             # no. Mel bands used in mfcc calc (default 128)
+N_MELS = 16             # no. Mel bands used in mfcc calc (default 128)
 
 
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
-WAVELET = 'shan0.07-0.8'        # select wavelet
-CWT_FREQ_RES = 0.5          # Frequency resolution of cwt
+WAVELET = 'shan0.07-0.8'     # select wavelet
+CWT_FREQ_RES = 0.4           # Frequency resolution of cwt
 
 
 """
@@ -78,7 +78,7 @@ Examples of good wavelet choices:
 
 # EVALUATION CONSTANTS
 # -----------------------------------------------------------------------------
-MEDIAN_FILTER_SIZE = 7    # Size of 1D median filter kernel
+MEDIAN_FILTER_SIZE = 3    # Size of 1D median filter kernel
 
 
 # PRINTOUT CONSTANTS
