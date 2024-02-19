@@ -72,7 +72,7 @@ def plot_roc(y_test, y_test_pred_proba):
     return roc_auc, medfilt_roc_auc
 
 
-def compute_medfilt_roc(y_true, y_score, pos_label=1, drop_intermediate=True):
+def compute_medfilt_roc(y_true, y_score, drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC)"""
     
     fps, tps, thresholds = positives_per_threshold(y_true, y_score)
@@ -107,7 +107,7 @@ def compute_medfilt_roc(y_true, y_score, pos_label=1, drop_intermediate=True):
     return fpr, tpr, thresholds
 
     
-def positives_per_threshold(y_true, y_score, pos_label=1):
+def positives_per_threshold(y_true, y_score):
     """Calculate true and false positives per threshold."""
 
     # sort scores in descending order
