@@ -32,15 +32,15 @@ def get_results(clf, X_train, y_train, X_test, y_test):
     c_matrix = metrics.calculate_confusion_matrix(y_test, y_test_pred)
     
     # Calculate AUC and plot ROC curve
-    roc_auc = metrics.plot_roc(y_test, y_test_pred_proba)
+    roc_auc, medfilt_roc_auc = metrics.plot_roc(y_test, y_test_pred_proba)
     
     # Print results
-    print_results(train_score, test_score,
-                  train_med_score, test_med_score, c_matrix, roc_auc)
+    print_results(train_score, test_score, train_med_score,
+                  test_med_score, c_matrix, roc_auc, medfilt_roc_auc)
 
 
-def print_results(train_score, test_score,
-                  train_med_score, test_med_score, c_matrix, roc_auc):
+def print_results(train_score, test_score, train_med_score,
+                  test_med_score, c_matrix, roc_auc, medfilt_roc_auc):
     """Print classification scoring metrics."""
     
     # Results Header
@@ -62,6 +62,7 @@ def print_results(train_score, test_score,
     
     # ROC AUC
     print('\n'*2 + 'ROC Curve:\n' + '-'*s.SUBHEADER_LEN +
-          f'\n  - ROC AUC: {roc_auc:.2f}')
+          f'\n  - ROC AUC: {roc_auc:.2f}' +
+          f'\n  - ROC AUC (median filtered): {medfilt_roc_auc:.2f}')
     
     
