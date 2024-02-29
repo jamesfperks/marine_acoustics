@@ -12,7 +12,7 @@ from marine_acoustics.model import metrics
 def get_results(train_samples, test_samples, predictions):
     """Calculate and print classification scoring metrics."""
         
-    # Datasets
+    # Ground truth labels
     _, y_train = sample.split_samples(train_samples)
     _, y_test = sample.split_samples(test_samples)
     
