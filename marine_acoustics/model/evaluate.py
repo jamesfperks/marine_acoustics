@@ -13,8 +13,8 @@ def get_results(train_samples, test_samples, predictions):
     """Calculate and print classification scoring metrics."""
         
     # Datasets
-    X_train, y_train = sample.split_samples(train_samples)
-    X_test, y_test = sample.split_samples(test_samples)
+    _, y_train = sample.split_samples(train_samples)
+    _, y_test = sample.split_samples(test_samples)
     
     # Class probabilities (for positive class "whale")
     y_train_pred_proba, y_test_pred_proba = predictions
