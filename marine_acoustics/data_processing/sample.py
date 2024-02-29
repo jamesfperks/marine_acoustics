@@ -6,6 +6,7 @@ Extract samples from the raw .wav files
 
 import time
 import random
+import torch
 import numpy as np
 import pandas as pd
 from marine_acoustics.configuration import settings as s
@@ -19,16 +20,14 @@ def get_training_samples(df_trainset, df_folder_structure):
           '-'*s.HEADER_LEN + '\n'*2 + '  - Extracting trainings samples...',
           end='')
     
-
     start = time.time()
-    X_train, y_train = get_samples(df_trainset,
-                                   df_folder_structure,
-                                   is_train=True)
+    train_samples = get_samples(df_trainset,
+                                df_folder_structure,
+                                is_train=True)
     end = time.time()
-    
     print(f'100% ({end-start:.1f} s)\n')
     
-    return X_train, y_train
+    return train_samples
 
 
 def get_test_samples(df_testset, df_folder_structure):
@@ -37,35 +36,31 @@ def get_test_samples(df_testset, df_folder_structure):
     print('  - Extracting test samples...', end='')
     
     start = time.time()
-    X_test, y_test = get_samples(df_testset,
+    test_samples = get_samples(df_testset,
                                  df_folder_structure,
                                  is_train=False)
     end = time.time()
-    
     print(f'100% ({end-start:.1f} s)\n')
     
-    return X_test, y_test
+    return test_samples
 
 
 def get_samples(df_selected_dataset, df_folder_structure, is_train):
-    """Extract labelled samples from .wav files."""
+    """
+    Get sample set from selected sites and call types.
+    Returns samples as a list of tuples [(X1, y1), (X2, y2), ...]
+    """
         
     # Sample from selected sites and call types
     sites = df_selected_dataset.index
     call_types = df_selected_dataset.columns
     sample_set = create_sample_set(sites, call_types, df_folder_structure)
     
-    # Create sample vector (n_samples x n_features)
-    samples = np.vstack(sample_set)
-    
     # Balance training samples and test samples (if selected)
     if (is_train == True) or (s.IS_TEST_BALANCED == True):
-        samples = balance_dataset(samples)
+        sample_set = balance_dataset(sample_set)
     
-    # Split sample vector
-    X, y = split_sample_vector(samples)
-    
-    return X, y
+    return sample_set
 
 
 def create_sample_set(sites, call_types, df_folder_structure):
@@ -84,11 +79,10 @@ def create_sample_set(sites, call_types, df_folder_structure):
         # Generate labelled samples from site
         site_samples = extract_samples(site, gb_wavfile, df_folder_structure)
         
-        # Append to sample set
+        # Add to sample set
         sample_set.extend(site_samples)
     
     return sample_set
-
 
 
 def concat_call_logs(site, call_types, df_folder_structure):
@@ -128,25 +122,25 @@ def extract_samples(site, gb_wavfile, df_folder_structure):
         
         # Add samples to site samples
         site_samples.extend(y_labelled_features)
-    
+
     return site_samples 
 
 
 def balance_dataset(samples):
     """Sub-sample the majority class to balance the dataset."""
     
-    labels = samples[:,-1]
-    
     whale_indexes = []
     background_indexes = []
     
-    # Split into whale and background indexes
-    for i in range(len(labels)):
-        if labels[i] == 1:
+    # Find sample indexes for whale and background
+    for i in range(len(samples)):
+        if samples[i][1] == 1:
             whale_indexes.append(i)
         else:
             background_indexes.append(i)
-       
+        
+    if len(background_indexes) < len(whale_indexes):
+        raise ValueError('Selected call type is the majority class.')
         
     # Randomly sub-sample indexes from background to match n_whale samples
     random.seed(s.SEED)
@@ -158,17 +152,50 @@ def balance_dataset(samples):
     balanced_indexes.sort()
     
     # Index samples using balanced indexes
-    balanced_samples = samples[balanced_indexes, :]
-  
+    balanced_samples = [samples[i] for i in balanced_indexes]
+    
     return balanced_samples
 
 
-def split_sample_vector(samples):
-    """Split samples into vectors X, y."""
+def split_samples(samples):
+    """Split a list of sample tuples [(X1, y1), (X2, y2), ...] into X, y.
     
-    # Label y is the last element in the feature vector
-    X = samples[:,0:-1]
-    y = samples[:,-1]
+    Return numppy arrays
+      X: (n_samples, features) list of feature vectors/matrix
+      y: (n_samples,) list of labels
+      
+    """
+    
+    X, y = [], []
+    for sample in samples:
+        X.append(sample[0])
+        y.append(sample[1])
+    
+    return np.asarray(X), np.asarray(y)
+
+
+def samples_to_tensors(samples):
+    """
+    Split a list of sample tuples [(X1, y1), (X2, y2), ...] into X, y.
+    
+    Convert X, y into tensors compatable with pytorch.
+    
+    Return torch tensors
+      X: (n_samples, n_channels, feature_width, feature_height) 
+      y: (n_samples, 1) list of labels
+      
+    """
+    
+    X, y = split_samples(samples)
+    
+    # Torch convolution expects n_samples x n_channels x w x h
+    # Add dimension of 1 to represent n_channels = 1
+    X = np.expand_dims(X, axis=1)
+    
+    # Create torch tensor
+    X = torch.from_numpy(X)
+    y = torch.from_numpy(y).float().reshape(-1, 1)
     
     return X, y
+
 

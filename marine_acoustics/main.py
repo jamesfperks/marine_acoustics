@@ -11,7 +11,7 @@ Email: jamesperks@outlook.com
 import time
 from marine_acoustics.configuration import intro, selector
 from marine_acoustics.data_processing import info, sample
-from marine_acoustics.model import train, evaluate
+from marine_acoustics.model import train, predict, evaluate
 
 
 def run():
@@ -36,17 +36,20 @@ def run():
     selector.print_selection_summary(df_trainset, df_testset)
     
     # Get training samples
-    X_train, y_train = sample.get_training_samples(df_trainset,
+    train_samples = sample.get_training_samples(df_trainset,
                                                    df_folder_structure)
     
     # Get test samples
-    X_test, y_test = sample.get_test_samples(df_testset, df_folder_structure)
+    test_samples = sample.get_test_samples(df_testset, df_folder_structure)
     
     # Train model
-    clf = train.train_classifier(X_train, y_train)
+    model = train.train_classifier(train_samples)
+    
+    # Get predictions
+    predictions = predict.get_predictions(train_samples, test_samples, model)
     
     # Evaluate model
-    evaluate.get_results(clf, X_train, y_train, X_test, y_test)
+    evaluate.get_results(train_samples, test_samples, predictions)
     
 
 def main():

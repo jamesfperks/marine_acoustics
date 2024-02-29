@@ -20,7 +20,10 @@ def extract_features(y):
         y_features = calculate_mfccs(y)   # Calculate MFCCs
         
     elif s.FEATURES == 'STFT':
-        y_features = calculate_stft(y)    # Calculate STFT
+        y_features = calculate_stft(y)    # Calculate DFT per frame
+        
+    elif s.FEATURES == 'STFT_FRAME':
+        y_features = calculate_stft_frames(y)    # Calculate STFT frames
         
     elif s.FEATURES == 'MEL':
         y_features = calculate_melspectrogram(y)  # Calculate mel-spectrogram
@@ -54,27 +57,58 @@ def calculate_mfccs(y):
     return mfccs
     
 
-def calculate_stft(y):
-    """Compute STFT and split data into frames."""
+def calculate_stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH,
+                   win_length=s.FRAME_LENGTH):
+    """
+    Compute STFT. Select freq max/min limits.
+    Returns n_windows x n_freq_bins
+    """
     
     # STFT of y
-    D = librosa.stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH)
+    D = librosa.stft(y,
+                     n_fft=n_fft,
+                     hop_length=hop_length,
+                     win_length=win_length)
     
     # STFT in dB
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
     
     # Select frequency bin range for STFT
-    stft_fmin_idx, stft_fmax_idx = get_stft_freq_range()
+    stft_fmin_idx, stft_fmax_idx = get_stft_freq_range(n_fft)
     S_db = S_db[:,stft_fmin_idx:stft_fmax_idx+1]
-           
+    
     return S_db
 
 
-def get_stft_freq_range():
+def calculate_stft_frames(y):
+    """Frame audio and calculate STFT for each frame."""
+    
+    # Pad y to match librosa frame offset in STFT/MFCC etc.
+    size = y.size + (s.FRAME_LENGTH//2)*2
+    y_padded = librosa.util.pad_center(y, size=size, axis=0)
+    
+    # Frame audio (n_frames x frame_len)
+    y_framed = librosa.util.frame(y_padded,
+                                  frame_length=s.FRAME_LENGTH,
+                                  hop_length=s.HOP_LENGTH, axis=0)
+    
+    # STFT of each frame. STFT freq bins are truncated between FMIN, FMAX
+    # Returns (n_frames x n_windows x n_freq_bins)
+    stft_frames = np.apply_along_axis(calculate_stft,
+                                      axis=1,
+                                      arr=y_framed,
+                                      n_fft=s.N_FFT,
+                                      hop_length=s.STFT_HOP,
+                                      win_length=s.STFT_LEN)
+
+    return stft_frames
+
+
+def get_stft_freq_range(n_fft):
     """Return indexes of STFT frequency bins which correspond to FMIN, FMAX"""
     
     # Calculate frequency bins
-    freqs = librosa.fft_frequencies(sr=s.SR, n_fft=s.FRAME_LENGTH)
+    freqs = librosa.fft_frequencies(sr=s.SR, n_fft=n_fft)
     
     # Find index of closest frequency bin to FMIN, FMAX
     stft_fmin_idx = np.argmin(np.abs(freqs-s.FMIN))

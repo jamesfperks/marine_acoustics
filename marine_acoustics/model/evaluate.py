@@ -5,20 +5,23 @@ Evaluate the model performance.
 
 
 from marine_acoustics.configuration import settings as s
+from marine_acoustics.data_processing import sample
 from marine_acoustics.model import metrics
 
 
-def get_results(clf, X_train, y_train, X_test, y_test):
+def get_results(train_samples, test_samples, predictions):
     """Calculate and print classification scoring metrics."""
         
-    # Class predictions
-    y_train_pred = clf.predict(X_train)
-    y_test_pred = clf.predict(X_test)
+    # Datasets
+    X_train, y_train = sample.split_samples(train_samples)
+    X_test, y_test = sample.split_samples(test_samples)
     
-    # CLass probabilities (for positive class "whale")
-    y_train_pred_proba = clf.predict_proba(X_train)[:,1] 
-    y_test_pred_proba = clf.predict_proba(X_test)[:,1]
+    # Class probabilities (for positive class "whale")
+    y_train_pred_proba, y_test_pred_proba = predictions
     
+    # Class binary predictions
+    y_train_pred = (y_train_pred_proba >= 0.5).astype(int)
+    y_test_pred = (y_test_pred_proba >= 0.5).astype(int)
     
     # Accuracy
     train_score, test_score = metrics.get_accuracy(y_train, y_train_pred,

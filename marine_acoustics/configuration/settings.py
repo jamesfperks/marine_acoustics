@@ -18,26 +18,29 @@ SR = 250             # Resample rate in Hz
 
 # TRAIN/TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAINING_SITES = [1,2,3]         # Indexes of sites for training (E.g. [1,4])
+TRAINING_SITES = [9]         # Indexes of sites for training (E.g. [1,4])
 
-TRAINING_CALL_TYPES = [0]        # Indexes of call types for training
+TRAINING_CALL_TYPES = [2]        # Indexes of call types for training
  
-TEST_SITES = [8]                 # Indexes of sites for testing
+TEST_SITES = [8]                # Indexes of sites for testing
 
 TEST_CALL_TYPES = []             # Indexes of call types for testing
 
 IS_TEST_BALANCED = True         # Balance the test sample set (True/False)
 
-"""
-Note for test set selection:
-    - [] defaults to using all sites not used in training
-    - [] defaults to using the same call type as trained on
-"""
+# TEST_SITES, [] defaults to all sites not used in training
+# TEST_CALL_TYPES, [] defaults to same call type as trained on
+
+
+# MODEL
+# -----------------------------------------------------------------------------
+MODEL = 'CNN'        # [HGBC, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'CWT'        # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
+                         # [STFT_FRAME, CWT_FRAME]
 
 
 # FRAME DURATION AND OVERLAP
@@ -45,11 +48,14 @@ FEATURES = 'CWT'        # [MFCC, STFT, MEL, CWT, SMILE]
 FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_OVERLAP = 50       # Frame overlap (%)
 
+STFT_DURATION = 1024     # STFT window duration 
+STFT_OVERLAP = 90        # STFT window overlap (%)
+       
 
 # FREQUENCY RANGE
 # -----------------------------------------------------------------------------
-FMAX = 33               # Frequency lower bound used in MFCC, STFT features
-FMIN = 18               # Frequency upper bound used in MFCC, STFT features
+FMAX = 29               # Frequency lower bound used in MFCC, STFT features
+FMIN = 15               # Frequency upper bound used in MFCC, STFT features
 
 
 # MFCC CONSTANTS
@@ -65,7 +71,7 @@ N_MELS = 16             # no. Mel bands used in mfcc calc (default 128)
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
 WAVELET = 'shan0.07-0.8'     # select wavelet
-CWT_FREQ_RES = 0.4           # Frequency resolution of cwt
+CWT_FREQ_RES = 1          # Frequency resolution of cwt
 
 
 """
@@ -92,6 +98,10 @@ SUBHEADER_LEN = 30
 #------------------------------------------------------------------------------
 FRAME_LENGTH = round(SR*FRAME_DURATION/1000)    # frame length (samples)
 HOP_LENGTH = round(FRAME_LENGTH *(100-FRAME_OVERLAP)/100) # hoplength (samples)
+
+STFT_LEN = round(SR*STFT_DURATION/1000)    # stft window length (samples)
+STFT_HOP = round(STFT_LEN *(100-STFT_OVERLAP)/100) # stft hop (samples)
+N_FFT = STFT_LEN*2       # Pad STFT window with zeros to increase n_freq_bins
 
 #------------------------------------------------------------------------------
 
