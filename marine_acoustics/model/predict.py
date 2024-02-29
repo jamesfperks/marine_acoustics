@@ -62,10 +62,6 @@ def pred_cnn(train_samples, test_samples, model):
         y_train_pred_proba = np.squeeze(model(X_train).detach().numpy())
         y_test_pred_proba = np.squeeze(model(X_test).detach().numpy())
     
-    print(type(y_train))
-    print(type(y_train_pred_proba))
-    print(y_train.shape)
-    print(y_train_pred_proba.shape)
     predictions = (y_train_pred_proba, y_test_pred_proba)
     
     return predictions

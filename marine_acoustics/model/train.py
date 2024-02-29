@@ -81,7 +81,6 @@ def train_cnn(train_samples):
     # Train the model
     model.train()
     epoch_loss = []
-    test_loss = []
     for epoch in range(n_epochs):    
         acc_loss = 0
         for X_batch, y_batch in loader:
