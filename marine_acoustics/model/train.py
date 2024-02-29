@@ -59,9 +59,8 @@ def train_cnn(train_samples):
     X_train, y_train = sample.samples_to_tensors(train_samples)
     
     torch.manual_seed(s.SEED)
-    n_epochs = 3
+    n_epochs = 10
     batch_size_train = 16
-    batch_size_test = 16
     learning_rate = 0.01
     momentum = 0.5
     log_interval = 10
@@ -74,8 +73,6 @@ def train_cnn(train_samples):
                                         batch_size=batch_size_train,
                                         shuffle=True)
     
-    
-    
     model = LeNet()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate,
                       momentum=momentum)
@@ -83,13 +80,28 @@ def train_cnn(train_samples):
     
     # Train the model
     model.train()
-    for epoch in range(n_epochs):
+    epoch_loss = []
+    test_loss = []
+    for epoch in range(n_epochs):    
+        acc_loss = 0
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
             output = model(X_batch)
             loss = loss_fn(output, y_batch)
+            acc_loss += loss.detach().numpy()
             loss.backward()
             optimizer.step()
+    
+        # Average batch loss over one epoch
+        epoch_loss.append(acc_loss / len(loader))
+        
+    plt.figure()
+    plt.plot(range(1, n_epochs+1), epoch_loss, color='blue')
+    plt.title('Training loss per epoch')
+    plt.legend(['Training Loss'], loc='upper right')
+    plt.xlabel('Epoch Number')
+    plt.ylabel('Training loss (Binary Cross Entropy loss)')
+
     
     return model
     
