@@ -22,7 +22,7 @@ def get_predictions(train_samples, test_samples, model):
     
     """
     
-    if s.MODEL == 'HGBC':
+    if s.MODEL == 'HGB':
         predictions = pred_grad_boost(train_samples, test_samples, model)
         
     elif s.MODEL == 'CNN':

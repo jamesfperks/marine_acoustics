@@ -34,7 +34,7 @@ IS_TEST_BALANCED = True         # Balance the test sample set (True/False)
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGBC, CNN]
+MODEL = 'CNN'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD

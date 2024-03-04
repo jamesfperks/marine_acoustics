@@ -27,7 +27,7 @@ def train_classifier(train_samples):
     print('  - Training model...', end='')
     start = time.time()
     
-    if s.MODEL == 'HGBC':
+    if s.MODEL == 'HGB':
         model = train_grad_boost(train_samples)
         
     elif s.MODEL == 'CNN':
@@ -63,7 +63,6 @@ def train_cnn(train_samples):
     batch_size_train = 16
     learning_rate = 0.01
     momentum = 0.5
-    log_interval = 10
     
     
     # Train loader accepts list(zip(X_train, y_train)
