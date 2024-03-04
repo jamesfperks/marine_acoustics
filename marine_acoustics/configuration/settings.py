@@ -20,7 +20,7 @@ SR = 250             # Resample rate in Hz
 # -----------------------------------------------------------------------------
 TRAINING_SITES = [10]            # Sites for training (E.g. [1,4])
 
-TRAINING_CALL_TYPES = [3]        # Call types for training
+TRAINING_CALL_TYPES = [1]        # Call types for training
  
 TEST_SITES = [9]                 # Sites for testing
 
@@ -30,6 +30,14 @@ IS_TEST_BALANCED = True          # Balance the test sample set (True/False)
 
 # TEST_SITES, [] defaults to all sites not used in training
 # TEST_CALL_TYPES, [] defaults to same call type as trained on
+
+
+# BINARY CLASSIFICATION
+# -----------------------------------------------------------------------------
+# Select call type for the negative class. [] defaults to background.
+
+TRAIN_NEGATIVE_CLASS = []       # Negative class for training
+TEST_NEGATIVE_CLASS = [2]        # Negative class for testing
 
 
 # MODEL

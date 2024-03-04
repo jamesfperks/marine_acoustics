@@ -53,7 +53,7 @@ def print_results(train_score, test_score, train_med_score, test_med_score,
     print('\n' + '-'*s.HEADER_LEN + '\nRESULTS\n' + '-'*s.HEADER_LEN)
     
     # Accuracy
-    print('\n' + '\nAccuracy:\n' + '-'*s.SUBHEADER_LEN +
+    print('\nAccuracy:\n' + '-'*s.SUBHEADER_LEN +
           f'\n  - Training: {train_score:.3f}\n  - Testing: {test_score:.3f}')
     
     # Median Filter Accuracy
