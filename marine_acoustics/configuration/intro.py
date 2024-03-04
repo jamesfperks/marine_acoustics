@@ -40,7 +40,7 @@ def print_recording_sites():
     print('\nRecording sites:\n' + '-'*s.SUBHEADER_LEN)
     
     for i in range(len(sites)):
-        print(f' {i}' + ' '*(4-len(str(i))) + sites[i])
+        print(f' {i+1}' + ' '*(4-len(str(i+1))) + sites[i])
 
  
 def print_call_types():
@@ -51,5 +51,5 @@ def print_call_types():
     print('\nCall types:\n' + '-'*s.SUBHEADER_LEN)
     
     for i in range(len(call_types)):
-        print(f' {i}  ' + call_types[i])
+        print(f' {i+1}  ' + call_types[i])
   

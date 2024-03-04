@@ -18,15 +18,15 @@ SR = 250             # Resample rate in Hz
 
 # TRAIN/TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAINING_SITES = [9]         # Indexes of sites for training (E.g. [1,4])
+TRAINING_SITES = [10]            # Sites for training (E.g. [1,4])
 
-TRAINING_CALL_TYPES = [2]        # Indexes of call types for training
+TRAINING_CALL_TYPES = [3]        # Call types for training
  
-TEST_SITES = [8]                # Indexes of sites for testing
+TEST_SITES = [9]                 # Sites for testing
 
-TEST_CALL_TYPES = []             # Indexes of call types for testing
+TEST_CALL_TYPES = []             # Call types for testing
 
-IS_TEST_BALANCED = True         # Balance the test sample set (True/False)
+IS_TEST_BALANCED = True          # Balance the test sample set (True/False)
 
 # TEST_SITES, [] defaults to all sites not used in training
 # TEST_CALL_TYPES, [] defaults to same call type as trained on
@@ -34,12 +34,12 @@ IS_TEST_BALANCED = True         # Balance the test sample set (True/False)
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGB, CNN]
+MODEL = 'HGB'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
                          # [STFT_FRAME, CWT_FRAME]
 
 

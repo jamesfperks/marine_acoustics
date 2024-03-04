@@ -9,14 +9,18 @@ from marine_acoustics.configuration import settings as s
 
 def select_training_set(df_annotations):
     """Select sites and call types to use for training."""
+ 
+    # Convert site labels to indexes
+    train_sites = [i-1 for i in s.TRAINING_SITES]
+    train_call_types = [i-1 for i in s.TRAINING_CALL_TYPES]
     
     # Training set annotation summary
-    df_trainset = df_annotations.iloc[s.TRAINING_SITES, s.TRAINING_CALL_TYPES]
+    df_trainset = df_annotations.iloc[train_sites, train_call_types]
     
     # Raise error if no annotations exist
     if not df_trainset.any(axis=None):
-        sites = df_annotations.index[s.TRAINING_SITES].to_list()
-        calls = df_annotations.columns[s.TRAINING_CALL_TYPES].to_list()
+        sites = df_annotations.index[train_sites].to_list()
+        calls = df_annotations.columns[train_call_types].to_list()
         raise ValueError('Chosen sites and call-types '
                           'contain zero annotations.', sites, calls)
     
@@ -26,18 +30,20 @@ def select_training_set(df_annotations):
 def select_test_set(df_annotations):
     """Select sites and call types to use for testing."""
     
-    test_sites = s.TEST_SITES
-    test_call_types = s.TEST_CALL_TYPES
+    test_sites = [i-1 for i in s.TEST_SITES]
+    test_call_types = [i-1 for i in s.TEST_CALL_TYPES]
+    train_sites = [i-1 for i in s.TRAINING_SITES]
+    train_call_types = [i-1 for i in s.TRAINING_CALL_TYPES]
     
     # Default to using all non-training sites if unspecified []
     if len(test_sites) == 0:
         test_sites = list(range(0, 11))  
-        for site_idx in s.TRAINING_SITES:   
+        for site_idx in train_sites:   
             test_sites.remove(site_idx)
     
     # Default to using training call types if unspecified []
     if len(test_call_types) == 0:
-        test_call_types = s.TRAINING_CALL_TYPES
+        test_call_types = train_call_types
             
     # Test set summary
     df_testset = df_annotations.iloc[test_sites, test_call_types]
