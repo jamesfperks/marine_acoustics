@@ -11,10 +11,10 @@ from marine_acoustics.data_processing import info
 def select_training_set(df_annotations):
     """Select sites and call types to use for training."""
  
-    train_sites = [i-1 for i in s.TRAINING_SITES]
+    train_sites = [i-1 for i in s.TRAIN_SITES]
     
     # Add any additional negative class call types
-    train_call_labels = sorted(set(s.TRAINING_CALL_TYPES +
+    train_call_labels = sorted(set(s.TRAIN_CALL_TYPES +
                                    s.TRAIN_NEGATIVE_CLASS))
     train_call_types = [i-1 for i in train_call_labels]
     
@@ -22,11 +22,8 @@ def select_training_set(df_annotations):
     df_trainset = df_annotations.iloc[train_sites, train_call_types]
     
     # Raise error if no annotations exist
-    if not df_trainset.any(axis=None):
-        sites = df_annotations.index[train_sites].to_list()
-        calls = df_annotations.columns[train_call_types].to_list()
-        raise ValueError('Chosen sites and call-types '
-                          'contain zero annotations.', sites, calls)
+    no_annotations_check(df_annotations, df_trainset,
+                         train_sites, train_call_types)
     
     return df_trainset
 
@@ -34,8 +31,8 @@ def select_training_set(df_annotations):
 def select_test_set(df_annotations):
     """Select sites and call types to use for testing."""
     
-    train_sites = [i-1 for i in s.TRAINING_SITES]
-    train_call_types = [i-1 for i in s.TRAINING_CALL_TYPES]
+    train_sites = [i-1 for i in s.TRAIN_SITES]
+    train_call_types = [i-1 for i in s.TRAIN_CALL_TYPES]
     test_sites = [i-1 for i in s.TEST_SITES]
     test_call_types = [i-1 for i in s.TEST_CALL_TYPES]
     test_call_types_neg_class = [i-1 for i in s.TEST_NEGATIVE_CLASS]
@@ -58,15 +55,24 @@ def select_test_set(df_annotations):
     df_testset = df_annotations.iloc[test_sites, test_call_types]
     
     # Raise error if no annotations exist
-    if not df_testset.any(axis=None):
-        sites = df_annotations.index[test_sites].to_list()
-        calls = df_annotations.columns[test_call_types].to_list()
-        raise ValueError('Chosen sites and call-types '
-                          'contain zero annotations.', sites, calls)
+    no_annotations_check(df_annotations, df_testset,
+                         test_sites, test_call_types)
     
     return df_testset
 
 
+def no_annotations_check(df_annotations, df_dataset, sites, call_types):
+    """
+    Raise error if given site and call type indexes contain no annotations.
+    """
+    
+    if not df_dataset.any(axis=None):
+        sites = df_annotations.index[sites].to_list()
+        calls = df_annotations.columns[call_types].to_list()
+        raise ValueError('Chosen sites and call-types '
+                          'contain zero annotations.', sites, calls)
+    
+    
 def print_selection_summary(df_trainset, df_testset):
     """Print a summary of the training set and test set."""
     
@@ -87,7 +93,7 @@ def print_class_selection(df_testset):
     
     # Training (positive / negative classes)
     train_pos_class_str = ''
-    for i in s.TRAINING_CALL_TYPES:
+    for i in s.TRAIN_CALL_TYPES:
         train_pos_class_str += call_types[i-1] + ', '
     
     if len(s.TRAIN_NEGATIVE_CLASS) > 0:

@@ -1,8 +1,8 @@
 """
 Settings used in the main script.
 
-Select recording sites and call types for train/test sets
-and the feature extraction method used.
+Select recording sites and call types for train/test sets,
+the model, and the feature extraction method used.
 
 All global constants are defined here.
 
@@ -13,23 +13,22 @@ All global constants are defined here.
 # -----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
 SEED = 12345         # Set random seed
-SR = 250             # Resample rate in Hz
 
 
-# TRAIN/TEST SET SELECTION
+# RECORDING SITE SELECTION
 # -----------------------------------------------------------------------------
-TRAINING_SITES = [10]            # Sites for training (E.g. [1,4])
-
-TRAINING_CALL_TYPES = [1]        # Call types for training
+TRAIN_SITES = [10]         # Sites for training (E.g. [1,4])
  
-TEST_SITES = [9]                 # Sites for testing
+TEST_SITES = [9]           # Sites for testing.
+                           # [] defaults to all sites not used in training.
+                                 
 
-TEST_CALL_TYPES = []             # Call types for testing
+# CALL TYPE SELECTION
+# -----------------------------------------------------------------------------
+TRAIN_CALL_TYPES = [3]        # Call types for training
 
-IS_TEST_BALANCED = True          # Balance the test sample set (True/False)
-
-# TEST_SITES, [] defaults to all sites not used in training
-# TEST_CALL_TYPES, [] defaults to same call type as trained on
+TEST_CALL_TYPES = []          # Call types for testing
+                              # [] defaults to same call type as trained on.
 
 
 # BINARY CLASSIFICATION
@@ -37,7 +36,10 @@ IS_TEST_BALANCED = True          # Balance the test sample set (True/False)
 # Select call type for the negative class. [] defaults to background.
 
 TRAIN_NEGATIVE_CLASS = []       # Negative class for training
-TEST_NEGATIVE_CLASS = [2]        # Negative class for testing
+TEST_NEGATIVE_CLASS = []        # Negative class for testing
+
+IS_TEST_BALANCED = True         # Balance the positive and negative class
+                                # in the test set (True/False)
 
 
 # MODEL
@@ -99,6 +101,11 @@ MEDIAN_FILTER_SIZE = 3    # Size of 1D median filter kernel
 # -----------------------------------------------------------------------------
 HEADER_LEN = 50
 SUBHEADER_LEN = 30
+
+
+# OTHER CONSTANTS
+# -----------------------------------------------------------------------------
+SR = 250             # Resample rate in Hz (Do not change from 250 Hz)
 
 
 #------------------------------------------------------------------------------
