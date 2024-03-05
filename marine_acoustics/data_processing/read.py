@@ -6,6 +6,7 @@ Read the AADC dataset.
 
 import librosa
 import pandas as pd
+import numpy as np
 from marine_acoustics.configuration import settings as s
 
 
@@ -47,6 +48,10 @@ def read_log(site, call_type, df_folder_structure):
               'High Freq (Hz)', 'Dur 90% (s)', 'Freq 5% (Hz)', 'Freq 95% (Hz)']
     
     df_log = pd.read_csv(log_filepath, sep='\t', usecols=fields)
+    
+    # Add a column to show the call type for each annotation
+    call_labels = pd.Series(np.full(df_log.shape[0],call_type))
+    df_log['Call Label'] = call_labels
     
     return df_log
 
