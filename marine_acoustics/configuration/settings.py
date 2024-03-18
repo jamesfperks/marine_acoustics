@@ -19,13 +19,13 @@ SEED = 12345         # Set random seed
 # -----------------------------------------------------------------------------
 TRAIN_SITES = [10]         # Sites for training (E.g. [1,4])
  
-TEST_SITES = [9]           # Sites for testing.
+TEST_SITES = [7]           # Sites for testing.
                            # [] defaults to all sites not used in training.
                                  
 
 # CALL TYPE SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_CALL_TYPES = [1]        # Call types for training
+TRAIN_CALL_TYPES = [3]        # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
@@ -35,10 +35,10 @@ TEST_CALL_TYPES = []          # Call types for testing
 # -----------------------------------------------------------------------------
 # Select call type for the negative class. [] defaults to background.
 
-TRAIN_NEGATIVE_CLASS = [3]       # Negative class for training
-TEST_NEGATIVE_CLASS = [3]         # Negative class for testing
+TRAIN_NEGATIVE_CLASS = []       # Negative class for training
+TEST_NEGATIVE_CLASS = []         # Negative class for testing
 
-IS_TEST_BALANCED = False         # Balance the positive and negative class
+IS_TEST_BALANCED = True         # Balance the positive and negative class
                                 # in the test set (True/False)
 
 
@@ -56,10 +56,10 @@ FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
 # FRAME DURATION AND OVERLAP
 # -----------------------------------------------------------------------------
 FRAME_DURATION = 3000    # Frame duration in milliseconds
-FRAME_OVERLAP = 50       # Frame overlap (%)
+FRAME_ADVANCE = 1500     # Frame advance in milliseconds
 
-STFT_DURATION = 1024     # STFT window duration 
-STFT_OVERLAP = 90        # STFT window overlap (%)
+STFT_DURATION = 1048     # STFT window duration 
+STFT_ADVANCE = 105       # STFT window advance in milliseconds
        
 
 # FREQUENCY RANGE
@@ -112,10 +112,10 @@ SR = 250             # Resample rate in Hz (Do not change from 250 Hz)
 # CALCULATED CONSTANTS (DO NOT CHANGE)
 #------------------------------------------------------------------------------
 FRAME_LENGTH = round(SR*FRAME_DURATION/1000)    # frame length (samples)
-HOP_LENGTH = round(FRAME_LENGTH *(100-FRAME_OVERLAP)/100) # hoplength (samples)
+HOP_LENGTH = round(SR*FRAME_ADVANCE/1000)       # hop length (samples)
 
-STFT_LEN = round(SR*STFT_DURATION/1000)    # stft window length (samples)
-STFT_HOP = round(STFT_LEN *(100-STFT_OVERLAP)/100) # stft hop (samples)
+STFT_LEN = round(SR*STFT_DURATION/1000)         # stft window length (samples)
+STFT_HOP = round(SR*STFT_ADVANCE/1000)          # stft hop (samples)
 N_FFT = STFT_LEN*2       # Pad STFT window with zeros to increase n_freq_bins
 
 #------------------------------------------------------------------------------
