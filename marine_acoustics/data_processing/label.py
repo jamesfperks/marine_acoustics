@@ -6,6 +6,7 @@ Label audio frames as "background" or "whale".
 
 import numpy as np
 from marine_acoustics.configuration import settings as s
+from marine_acoustics.data_processing import info
 
 
 def label_features(y_features, logs, sr_default):
@@ -16,13 +17,14 @@ def label_features(y_features, logs, sr_default):
     
     # Convert call indexes to frame indexes
     frame_indexes = index2frame(call_indexes)
+
+    # Convert labels in logs to multi-class numeric labels
+    multi_class_labels = get_multi_class_labels(logs)
     
-    # For each annotation, label corresponding frames 1 if "whale", else 0 
-    feature_labels = np.zeros(y_features.shape[0])  
-    for start, end in frame_indexes:  
-        whale_indexes = np.arange(start, end+1) # Non-inclusive end frame idx
-        feature_labels[whale_indexes] = np.ones(len(whale_indexes))
-    
+    # Apply whale call labels to features
+    feature_labels = apply_labels(y_features, frame_indexes,
+                                  multi_class_labels)
+
     # Create list of sample tuples [(X1, y1), ...]
     y_labelled_features = list(zip(y_features, feature_labels))
     
@@ -64,3 +66,63 @@ def index2frame(call_indexes):
 
     return frame_indexes
 
+
+def get_multi_class_labels(logs):
+    """
+    Return numberic labels for each call type annotaions in the given logs.
+    
+    1  Bm-A
+    2  Bm-B
+    3  Bm-Z
+    4  Bm-D
+    5  Bp-20
+    6  Bp-20+
+    7  Bp-Downsweep
+    8  Unidentified
+    
+    """
+    
+    # Dict to convert call string to numeric call label
+    call_type_strings = info.get_call_types()
+    call_type_nums = list(range(1,len(call_type_strings)+1))
+    class_label_dict = dict(zip(call_type_strings, call_type_nums))
+    
+    # Convert labels in logs to numeric labels
+    call_label_strings = logs['Call Label'].to_list()
+    multi_class_labels = [class_label_dict[c] for c in call_label_strings]
+    
+    return multi_class_labels
+
+
+def apply_labels(y_features, frame_indexes, multi_class_labels):
+    """
+    Return a list of multi-class numeric labels corresponding to each feature.
+    Any feature not contained within an annotated frame index is assumed to
+    be background, 0.
+    
+    """
+
+    # Initially assume all features are background "0"
+    feature_labels = np.zeros(y_features.shape[0])
+    
+    # Apply labels to section of annotated frames
+    for i in range(frame_indexes.shape[0]):
+        start, end = frame_indexes[i]
+        label = multi_class_labels[i]
+        annotated_indexes = np.arange(start, end+1)
+        old_section_labels = feature_labels[annotated_indexes]
+        new_section_labels = np.full(len(annotated_indexes), label,
+                                     dtype=float)
+        
+        # Replace label with nan if attempting to label a feature which already
+        # has been assigned a different label
+        for i in range(len(old_section_labels)):
+            if old_section_labels[i] not in (0, label):
+                new_section_labels[i] = np.nan
+        
+        feature_labels[annotated_indexes] = new_section_labels
+
+    return feature_labels
+    
+    
+    

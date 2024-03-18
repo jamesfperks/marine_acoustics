@@ -56,11 +56,14 @@ def get_samples(df_selected_dataset, df_folder_structure, is_train):
     call_types = df_selected_dataset.columns
     sample_set = create_sample_set(sites, call_types, df_folder_structure)
     
+    # Map multi class samples to binary for classification
+    binary_samples = multi_to_binary(sample_set, is_train)
+    
     # Balance training samples and test samples (if selected)
     if (is_train == True) or (s.IS_TEST_BALANCED == True):
-        sample_set = balance_dataset(sample_set)
+        binary_samples = balance_dataset(binary_samples)
     
-    return sample_set
+    return binary_samples
 
 
 def create_sample_set(sites, call_types, df_folder_structure):
@@ -77,7 +80,8 @@ def create_sample_set(sites, call_types, df_folder_structure):
         gb_wavfile = df_logs.groupby('Begin File')
         
         # Generate labelled samples from site
-        site_samples = extract_samples(site, gb_wavfile, df_folder_structure)
+        site_samples = extract_samples(site, gb_wavfile,
+                                       df_folder_structure)
         
         # Add to sample set
         sample_set.extend(site_samples)
@@ -97,7 +101,7 @@ def concat_call_logs(site, call_types, df_folder_structure):
             logs.append(df_log)
     
     df_logs = pd.concat(logs)
-    
+
     return df_logs
 
 
@@ -126,29 +130,70 @@ def extract_samples(site, gb_wavfile, df_folder_structure):
     return site_samples 
 
 
+def multi_to_binary(sample_set, is_train):
+    """Convert list of multi-class samples to binary 0-1 samples."""
+   
+    s
+    if is_train==True:
+        pos_labels = s.TRAIN_CALL_TYPES
+        neg_labels = s.TRAIN_NEGATIVE_CLASS
+        
+    else:
+        if s.TEST_CALL_TYPES == []:
+            pos_labels = s.TRAIN_CALL_TYPES
+        else:
+            pos_labels = s.TEST_CALL_TYPES
+    
+        neg_labels = s.TEST_NEGATIVE_CLASS
+        
+    # Default negative class is background "0" if none specified.
+    if neg_labels == []:
+        neg_labels = [0]
+    
+    
+    binary_samples = []
+
+    for i in range(len(sample_set)):
+        feature = sample_set[i][0]
+        label = sample_set[i][1]
+        
+        if label in pos_labels:
+            binary_samples.append((feature, 1))
+            
+        elif label in neg_labels:
+            binary_samples.append((feature, 0))
+         
+  
+    return binary_samples
+
+
 def balance_dataset(samples):
     """Sub-sample the majority class to balance the dataset."""
     
-    whale_indexes = []
-    background_indexes = []
+    one_indexes = []
+    zero_indexes = []
     
-    # Find sample indexes for whale and background
+    # Find sample indexes for positive and negative class
     for i in range(len(samples)):
         if samples[i][1] == 1:
-            whale_indexes.append(i)
+            one_indexes.append(i)
         else:
-            background_indexes.append(i)
-        
-    if len(background_indexes) < len(whale_indexes):
-        raise ValueError('Selected call type is the majority class.')
-        
-    # Randomly sub-sample indexes from background to match n_whale samples
-    random.seed(s.SEED)
-    sampled_background_indexes = random.sample(background_indexes,
-                                               len(whale_indexes))
+            zero_indexes.append(i)
     
-    # Recombine whale and background indexes preserving sample order
-    balanced_indexes = whale_indexes + sampled_background_indexes
+    
+    if len(zero_indexes) > len(one_indexes):
+        major_indexes = zero_indexes
+        min_indexes = one_indexes
+    else:
+        major_indexes = one_indexes
+        min_indexes = zero_indexes
+        
+    # Randomly sub-sample indexes from majority to match minority
+    random.seed(s.SEED)
+    sampled_major_indexes = random.sample(major_indexes, len(min_indexes))
+    
+    # Recombine major and min indexes preserving sample order
+    balanced_indexes = min_indexes + sampled_major_indexes
     balanced_indexes.sort()
     
     # Index samples using balanced indexes

@@ -25,7 +25,7 @@ TEST_SITES = [9]           # Sites for testing.
 
 # CALL TYPE SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_CALL_TYPES = [3]        # Call types for training
+TRAIN_CALL_TYPES = [1]        # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
@@ -35,21 +35,21 @@ TEST_CALL_TYPES = []          # Call types for testing
 # -----------------------------------------------------------------------------
 # Select call type for the negative class. [] defaults to background.
 
-TRAIN_NEGATIVE_CLASS = []       # Negative class for training
-TEST_NEGATIVE_CLASS = []        # Negative class for testing
+TRAIN_NEGATIVE_CLASS = [3]       # Negative class for training
+TEST_NEGATIVE_CLASS = [3]         # Negative class for testing
 
-IS_TEST_BALANCED = True         # Balance the positive and negative class
+IS_TEST_BALANCED = False         # Balance the positive and negative class
                                 # in the test set (True/False)
 
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'HGB'        # [HGB, CNN]
+MODEL = 'CNN'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
                          # [STFT_FRAME, CWT_FRAME]
 
 
