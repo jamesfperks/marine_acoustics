@@ -11,7 +11,7 @@ All global constants are defined here.
 
 # GENERAL CONSTANTS
 # -----------------------------------------------------------------------------
-DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
+DATA_FILEPATH = 'data/raw/AcousticTrends_BlueFinLibrary'
 SEED = 12345         # Set random seed
 
 
@@ -25,7 +25,7 @@ TEST_SITES = [7]           # Sites for testing.
 
 # CALL TYPE SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_CALL_TYPES = [3]        # Call types for training
+TRAIN_CALL_TYPES = [1]        # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
@@ -44,12 +44,12 @@ IS_TEST_BALANCED = True         # Balance the positive and negative class
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGB, CNN]
+MODEL = 'HGB'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
                          # [STFT_FRAME, CWT_FRAME]
 
 
@@ -58,8 +58,8 @@ FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
 FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_ADVANCE = 1500     # Frame advance in milliseconds
 
-STFT_DURATION = 1048     # STFT window duration 
-STFT_ADVANCE = 105       # STFT window advance in milliseconds
+STFT_DURATION = 1024     # STFT window duration 
+STFT_ADVANCE = 100       # STFT window advance in milliseconds
        
 
 # FREQUENCY RANGE
