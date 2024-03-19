@@ -45,12 +45,12 @@ IS_TEST_BALANCED = True         # Balance the positive and negative class
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'HGB'        # [HGB, CNN]
+MODEL = 'CNN'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
                          # [STFT_FRAME, CWT_FRAME]
 
 

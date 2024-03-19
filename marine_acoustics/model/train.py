@@ -21,17 +21,22 @@ from marine_acoustics.data_processing import sample
 from marine_acoustics.model.cnn import LeNet
 
 
-def train_classifier(train_samples):
+def train_classifier():
     """Train the model used for classification.."""
     
     print('  - Training model...', end='')
     start = time.time()
     
+    # Load training set
+    X_train = np.load(s.SAVE_DATA_FILEPATH + '/X_train.npy')
+    y_train = np.load(s.SAVE_DATA_FILEPATH + '/y_train.npy')
+    
+    # Select model
     if s.MODEL == 'HGB':
-        model = train_grad_boost(train_samples)
+        model = train_grad_boost(X_train, y_train)
         
     elif s.MODEL == 'CNN':
-        model = train_cnn(train_samples)
+        model = train_cnn(X_train, y_train)
     
     else:
         raise NotImplementedError('Model chosen not implemented: ', s.MODEL)
@@ -42,10 +47,8 @@ def train_classifier(train_samples):
     return model
 
 
-def train_grad_boost(train_samples):
+def train_grad_boost(X_train, y_train):
     """Train scikit learn HistGradientBoostingClassifier."""
-    
-    X_train, y_train = sample.split_samples(train_samples)
     
     model = HistGradientBoostingClassifier(random_state=s.SEED).fit(X_train,
                                                                     y_train)
@@ -53,10 +56,11 @@ def train_grad_boost(train_samples):
     return model
     
 
-def train_cnn(train_samples):
+def train_cnn(X_train, y_train):
     """Train CNN."""
     
-    X_train, y_train = sample.samples_to_tensors(train_samples)
+    # Convert to tensor
+    X_train, y_train = sample.numpy_to_tensor(X_train, y_train)
     
     torch.manual_seed(s.SEED)
     n_epochs = 10

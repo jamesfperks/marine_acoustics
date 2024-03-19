@@ -4,45 +4,12 @@ Extract samples from the raw .wav files
 """
 
 
-import time
 import random
 import torch
 import numpy as np
 import pandas as pd
 from marine_acoustics.configuration import settings as s
 from marine_acoustics.data_processing import read, features, label
-
-
-def get_training_samples(df_trainset, df_folder_structure):
-    """Return extracted trainings samples and print time taken."""
-    
-    print('\n'*2 + '-'*s.HEADER_LEN + '\nTRAINING PROGRESS\n' +
-          '-'*s.HEADER_LEN + '\n'*2 + '  - Extracting trainings samples...',
-          end='')
-    
-    start = time.time()
-    train_samples = get_samples(df_trainset,
-                                df_folder_structure,
-                                is_train=True)
-    end = time.time()
-    print(f'100% ({end-start:.1f} s)\n')
-    
-    return train_samples
-
-
-def get_test_samples(df_testset, df_folder_structure):
-    """Return extracted test samples and print time taken."""
-    
-    print('  - Extracting test samples...', end='')
-    
-    start = time.time()
-    test_samples = get_samples(df_testset,
-                                 df_folder_structure,
-                                 is_train=False)
-    end = time.time()
-    print(f'100% ({end-start:.1f} s)\n')
-    
-    return test_samples
 
 
 def get_samples(df_selected_dataset, df_folder_structure, is_train):
@@ -219,19 +186,19 @@ def split_samples(samples):
     return np.asarray(X), np.asarray(y)
 
 
-def samples_to_tensors(samples):
+def numpy_to_tensor(X, y):
     """
-    Split a list of sample tuples [(X1, y1), (X2, y2), ...] into X, y.
+    Convert X, y numpy arrays into tensors compatable with pytorch.
     
-    Convert X, y into tensors compatable with pytorch.
-    
+    Input:
+      X: (n_samples, feature_width, feature_height)
+      y: (n_samples,)
+      
     Return torch tensors
       X: (n_samples, n_channels, feature_width, feature_height) 
       y: (n_samples, 1) list of labels
       
     """
-    
-    X, y = split_samples(samples)
     
     # Torch convolution expects n_samples x n_channels x w x h
     # Add dimension of 1 to represent n_channels = 1

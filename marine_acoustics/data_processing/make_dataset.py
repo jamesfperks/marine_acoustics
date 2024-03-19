@@ -4,6 +4,7 @@ Read the AADC dataset.
 """
 
 
+import time
 import numpy as np
 from marine_acoustics.configuration import selector
 from marine_acoustics.data_processing import info, sample
@@ -29,16 +30,45 @@ def make_dataset():
     selector.print_selection_summary(df_trainset, df_testset)
     
     # Get training samples
-    train_samples = sample.get_training_samples(df_trainset,
-                                                   df_folder_structure)
+    train_samples = get_training_samples(df_trainset, df_folder_structure)
     
     # Get test samples
-    test_samples = sample.get_test_samples(df_testset, df_folder_structure)
+    test_samples = get_test_samples(df_testset, df_folder_structure)
     
     # Save train and test sets
     save_datasets(train_samples, test_samples)
     
     return train_samples, test_samples
+
+
+def get_training_samples(df_trainset, df_folder_structure):
+    """Return extracted trainings samples and print time taken."""
+    
+    print('\n'*2 + '-'*s.HEADER_LEN + '\nTRAINING PROGRESS\n' +
+          '-'*s.HEADER_LEN + '\n'*2 + '  - Extracting trainings samples...',
+          end='')
+    
+    start = time.time()
+    train_samples = sample.get_samples(df_trainset, df_folder_structure,
+                                       is_train=True)
+    end = time.time()
+    print(f'100% ({end-start:.1f} s)\n')
+    
+    return train_samples
+
+
+def get_test_samples(df_testset, df_folder_structure):
+    """Return extracted test samples and print time taken."""
+    
+    print('  - Extracting test samples...', end='')
+    
+    start = time.time()
+    test_samples = sample.get_samples(df_testset, df_folder_structure,
+                                      is_train=False)
+    end = time.time()
+    print(f'100% ({end-start:.1f} s)\n')
+    
+    return test_samples
 
 
 def save_datasets(train_samples, test_samples):

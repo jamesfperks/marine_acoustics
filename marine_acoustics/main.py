@@ -24,10 +24,10 @@ def run():
     train_samples, test_samples = make_dataset.make_dataset()
     
     # Train model
-    model = train.train_classifier(train_samples)
+    model = train.train_classifier()
     
     # Get predictions
-    predictions = predict.get_predictions(train_samples, test_samples, model)
+    predictions = predict.get_predictions(model)
     
     # Evaluate model
     evaluate.get_results(train_samples, test_samples, predictions)

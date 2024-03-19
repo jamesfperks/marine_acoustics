@@ -10,10 +10,9 @@ Return predictions = (y_train_pred_proba, y_test_pred_proba)
 import torch
 import numpy as np
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.data_processing import sample
 
 
-def get_predictions(train_samples, test_samples, model):
+def get_predictions(model):
     """
     Get prediction probabiliites for the positve class
     for the chosen classifier.
@@ -22,11 +21,16 @@ def get_predictions(train_samples, test_samples, model):
     
     """
     
+    # Load samples
+    X_train = np.load(s.SAVE_DATA_FILEPATH + '/X_train.npy')
+    X_test = np.load(s.SAVE_DATA_FILEPATH + '/X_test.npy')
+    
+    # Select model for predictions
     if s.MODEL == 'HGB':
-        predictions = pred_grad_boost(train_samples, test_samples, model)
+        predictions = pred_grad_boost(X_train, X_test, model)
         
     elif s.MODEL == 'CNN':
-        predictions = pred_cnn(train_samples, test_samples, model)
+        predictions = pred_cnn(X_train, X_test, model)
     
     else:
         raise NotImplementedError('Model chosen not implemented: ', s.MODEL)
@@ -34,13 +38,10 @@ def get_predictions(train_samples, test_samples, model):
     return predictions
 
 
-def pred_grad_boost(train_samples, test_samples, model):
+def pred_grad_boost(X_train, X_test, model):
     """Positive class predicitons for HistGradientBoostingClassifier."""
-    
-    X_train, y_train = sample.split_samples(train_samples)
-    X_test, y_test = sample.split_samples(test_samples)
-    
-    # CLass probabilities (for positive class "whale")
+      
+    # Class probabilities (for positive class "whale")
     y_train_pred_proba = model.predict_proba(X_train)[:,1] 
     y_test_pred_proba = model.predict_proba(X_test)[:,1]
     
@@ -49,11 +50,17 @@ def pred_grad_boost(train_samples, test_samples, model):
     return predictions
 
 
-def pred_cnn(train_samples, test_samples, model):
+def pred_cnn(X_train, X_test, model):
     """Positive class predicitons for CNN."""
     
-    X_train, y_train = sample.samples_to_tensors(train_samples)
-    X_test, y_test = sample.samples_to_tensors(test_samples)
+    # Torch expects n_samples x n_channels x w x h
+    # Add dimension of 1 to represent n_channels = 1
+    X_train = np.expand_dims(X_train, axis=1)
+    X_test = np.expand_dims(X_test, axis=1)
+    
+    # Create torch tensor
+    X_train = torch.from_numpy(X_train)
+    X_test = torch.from_numpy(X_test)
     
     with torch.no_grad():
         model.eval()
