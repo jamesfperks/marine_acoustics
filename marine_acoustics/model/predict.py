@@ -25,7 +25,7 @@ def get_predictions(model):
     X_train = np.load(s.SAVE_DATA_FILEPATH + '/X_train.npy')
     X_test = np.load(s.SAVE_DATA_FILEPATH + '/X_test.npy')
     
-    # Select model for predictions
+    # Get model predictions
     if s.MODEL == 'HGB':
         predictions = pred_grad_boost(X_train, X_test, model)
         
@@ -34,6 +34,9 @@ def get_predictions(model):
     
     else:
         raise NotImplementedError('Model chosen not implemented: ', s.MODEL)
+        
+    # Save predictions
+    save_predictions(predictions)
  
     return predictions
 
@@ -74,5 +77,13 @@ def pred_cnn(X_train, X_test, model):
     return predictions
 
 
+def save_predictions(predictions):
+    """Write predictions to .npy files."""
 
+    y_train_proba, y_test_proba = predictions
+    
+    # Save as binary file in .npy format
+    np.save(s.SAVE_PREDICTIONS_FILEPATH + '/y_train_proba.npy', y_train_proba)
+    np.save(s.SAVE_PREDICTIONS_FILEPATH + '/y_test_proba.npy', y_test_proba)
 
+    

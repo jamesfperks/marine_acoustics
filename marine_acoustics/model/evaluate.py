@@ -4,24 +4,25 @@ Evaluate the model performance.
 """
 
 
+import numpy as np
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.data_processing import sample
 from marine_acoustics.model import metrics
 
 
-def get_results(train_samples, test_samples, predictions):
+def get_results():
     """Calculate and print classification scoring metrics."""
         
-    # Ground truth labels
-    _, y_train = sample.split_samples(train_samples)
-    _, y_test = sample.split_samples(test_samples)
+    # Load ground truth labels
+    y_train = np.load(s.SAVE_DATA_FILEPATH + '/y_train.npy')
+    y_test = np.load(s.SAVE_DATA_FILEPATH + '/y_test.npy') 
     
-    # Class probabilities (for positive class "whale")
-    y_train_pred_proba, y_test_pred_proba = predictions
+    # Load predicted probabilities for positive class
+    y_train_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + '/y_train_proba.npy')
+    y_test_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + '/y_test_proba.npy')
     
     # Class binary predictions
-    y_train_pred = (y_train_pred_proba >= 0.5).astype(int)
-    y_test_pred = (y_test_pred_proba >= 0.5).astype(int)
+    y_train_pred = (y_train_proba >= 0.5).astype(int)
+    y_test_pred = (y_test_proba >= 0.5).astype(int)
     
     # Accuracy
     train_score, test_score = metrics.get_accuracy(y_train, y_train_pred,
@@ -38,7 +39,7 @@ def get_results(train_samples, test_samples, predictions):
     f1, f1_med = metrics.calculate_f1(y_test, y_test_pred)
     
     # Calculate AUC and plot ROC curve
-    roc_auc, medfilt_roc_auc = metrics.plot_roc(y_test, y_test_pred_proba)
+    roc_auc, medfilt_roc_auc = metrics.plot_roc(y_test, y_test_proba)
     
     # Print results
     print_results(train_score, test_score, train_med_score, test_med_score,

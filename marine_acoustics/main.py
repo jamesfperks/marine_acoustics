@@ -30,7 +30,7 @@ def run():
     predictions = predict.get_predictions(model)
     
     # Evaluate model
-    evaluate.get_results(train_samples, test_samples, predictions)
+    evaluate.get_results()
     
 
 def main():

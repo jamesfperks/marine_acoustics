@@ -13,6 +13,7 @@ All global constants are defined here.
 # -----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/raw/AcousticTrends_BlueFinLibrary'
 SAVE_DATA_FILEPATH = 'data/processed'
+SAVE_PREDICTIONS_FILEPATH = 'predictions'
 SEED = 12345         # Set random seed
 
 
