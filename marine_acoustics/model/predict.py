@@ -9,10 +9,12 @@ Return predictions = (y_train_pred_proba, y_test_pred_proba)
 
 import torch
 import numpy as np
+from joblib import load
+from marine_acoustics.model.cnn import LeNet
 from marine_acoustics.configuration import settings as s
 
 
-def get_predictions(model):
+def get_predictions():
     """
     Get prediction probabiliites for the positve class
     for the chosen classifier.
@@ -27,10 +29,10 @@ def get_predictions(model):
     
     # Get model predictions
     if s.MODEL == 'HGB':
-        predictions = pred_grad_boost(X_train, X_test, model)
+        predictions = pred_grad_boost(X_train, X_test)
         
     elif s.MODEL == 'CNN':
-        predictions = pred_cnn(X_train, X_test, model)
+        predictions = pred_cnn(X_train, X_test)
     
     else:
         raise NotImplementedError('Model chosen not implemented: ', s.MODEL)
@@ -41,9 +43,12 @@ def get_predictions(model):
     return predictions
 
 
-def pred_grad_boost(X_train, X_test, model):
+def pred_grad_boost(X_train, X_test):
     """Positive class predicitons for HistGradientBoostingClassifier."""
       
+    # Load model
+    model = load(s.SAVE_MODEL_FILEPATH + '/HGB')
+    
     # Class probabilities (for positive class "whale")
     y_train_pred_proba = model.predict_proba(X_train)[:,1] 
     y_test_pred_proba = model.predict_proba(X_test)[:,1]
@@ -53,7 +58,7 @@ def pred_grad_boost(X_train, X_test, model):
     return predictions
 
 
-def pred_cnn(X_train, X_test, model):
+def pred_cnn(X_train, X_test):
     """Positive class predicitons for CNN."""
     
     # Torch expects n_samples x n_channels x w x h
@@ -64,6 +69,10 @@ def pred_cnn(X_train, X_test, model):
     # Create torch tensor
     X_train = torch.from_numpy(X_train)
     X_test = torch.from_numpy(X_test)
+    
+    # Load model
+    model = LeNet()
+    model.load_state_dict(torch.load(s.SAVE_MODEL_FILEPATH + '/CNN'))
     
     with torch.no_grad():
         model.eval()

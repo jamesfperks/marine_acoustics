@@ -21,13 +21,13 @@ def run():
     intro.print_introduction()
     
     # Extract and save train and test sets
-    train_samples, test_samples = make_dataset.make_dataset()
+    make_dataset.make_dataset()
     
     # Train model
-    model = train.train_classifier()
+    train.train_classifier()
     
     # Get predictions
-    predictions = predict.get_predictions(model)
+    predict.get_predictions()
     
     # Evaluate model
     evaluate.get_results()

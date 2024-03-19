@@ -5,16 +5,13 @@ Train the model.
 
 
 import torch
-import torchvision
 import torch.nn as nn
 import torch.optim as optim
-
 import time
-import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 
-
+from joblib import dump
 from sklearn.ensemble import HistGradientBoostingClassifier
 from marine_acoustics.configuration import settings as s
 from marine_acoustics.data_processing import sample
@@ -52,6 +49,8 @@ def train_grad_boost(X_train, y_train):
     
     model = HistGradientBoostingClassifier(random_state=s.SEED).fit(X_train,
                                                                     y_train)
+    
+    dump(model, s.SAVE_MODEL_FILEPATH + '/HGB')
     
     return model
     
@@ -105,6 +104,9 @@ def train_cnn(X_train, y_train):
     plt.ylabel('Training loss (Binary Cross Entropy loss)')
 
     
+    # Save model
+    torch.save(model.state_dict(), s.SAVE_MODEL_FILEPATH + '/CNN')
+
     return model
     
 

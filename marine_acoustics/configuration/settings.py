@@ -14,6 +14,7 @@ All global constants are defined here.
 DATA_FILEPATH = 'data/raw/AcousticTrends_BlueFinLibrary'
 SAVE_DATA_FILEPATH = 'data/processed'
 SAVE_PREDICTIONS_FILEPATH = 'predictions'
+SAVE_MODEL_FILEPATH = 'models'
 SEED = 12345         # Set random seed
 
 
@@ -46,12 +47,12 @@ IS_TEST_BALANCED = True         # Balance the positive and negative class
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGB, CNN]
+MODEL = 'HGB'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT_FRAME'  # [MFCC, STFT, MEL, CWT, SMILE]
+FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
                          # [STFT_FRAME, CWT_FRAME]
 
 
