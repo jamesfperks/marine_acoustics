@@ -52,8 +52,8 @@ MODEL = 'HGB'        # [HGB, CNN]
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'  # [MFCC, STFT, MEL, CWT, SMILE]
-                         # [STFT_FRAME, CWT_FRAME]
+FEATURES = 'DFT'  # [MFCC, DFT, MEL, CWT, SMILE]
+                         # [STFT, CWT_FRAME]
 
 
 # FRAME DURATION AND OVERLAP

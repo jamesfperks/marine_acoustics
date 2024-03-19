@@ -6,7 +6,6 @@ Feature respresentations used to create a feature vector from .wav files.
 
 import librosa
 import pywt
-import opensmile
 import numpy as np
 
 from marine_acoustics.configuration import settings as s
@@ -19,10 +18,10 @@ def extract_features(y):
     if s.FEATURES == 'MFCC':
         y_features = calculate_mfccs(y)   # Calculate MFCCs
         
-    elif s.FEATURES == 'STFT':
+    elif s.FEATURES == 'DFT':
         y_features = calculate_stft(y)    # Calculate DFT per frame
         
-    elif s.FEATURES == 'STFT_FRAME':
+    elif s.FEATURES == 'STFT':
         y_features = calculate_stft_frames(y)    # Calculate STFT frames
         
     elif s.FEATURES == 'MEL':
