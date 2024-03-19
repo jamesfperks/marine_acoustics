@@ -12,6 +12,7 @@ All global constants are defined here.
 # GENERAL CONSTANTS
 # -----------------------------------------------------------------------------
 DATA_FILEPATH = 'data/raw/AcousticTrends_BlueFinLibrary'
+SAVE_DATA_FILEPATH = 'data/processed'
 SEED = 12345         # Set random seed
 
 
@@ -25,7 +26,7 @@ TEST_SITES = [7]           # Sites for testing.
 
 # CALL TYPE SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_CALL_TYPES = [1]        # Call types for training
+TRAIN_CALL_TYPES = [3]        # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
