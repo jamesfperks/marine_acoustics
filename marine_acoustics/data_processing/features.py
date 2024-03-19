@@ -30,9 +30,6 @@ def extract_features(y):
         
     elif s.FEATURES == 'CWT':
         y_features = calculate_cwt(y)   # Calculate cwt
-        
-    elif s.FEATURES == 'SMILE':
-        y_features = calculate_smile(y)   # extract openSMILE features
     
     else:
         raise NotImplementedError('Feature representation chosen ' 
@@ -51,6 +48,7 @@ def calculate_mfccs(y):
                                  n_fft=s.FRAME_LENGTH,
                                  hop_length=s.HOP_LENGTH,
                                  n_mels=s.N_MELS,
+                                 center=False,
                                  fmin=s.FMIN,
                                  fmax=s.FMAX).T
     
@@ -58,7 +56,7 @@ def calculate_mfccs(y):
     
 
 def calculate_stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH,
-                   win_length=s.FRAME_LENGTH):
+                   win_length=s.FRAME_LENGTH, center=False):
     """
     Compute STFT. Select freq max/min limits.
     Returns n_windows x n_freq_bins
@@ -68,7 +66,8 @@ def calculate_stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH,
     D = librosa.stft(y,
                      n_fft=n_fft,
                      hop_length=hop_length,
-                     win_length=win_length)
+                     win_length=win_length,
+                     center=center)
     
     # STFT in dB
     S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max).T
@@ -82,13 +81,9 @@ def calculate_stft(y, n_fft=s.FRAME_LENGTH, hop_length=s.HOP_LENGTH,
 
 def calculate_stft_frames(y):
     """Frame audio and calculate STFT for each frame."""
-    
-    # Pad y to match librosa frame offset in STFT/MFCC etc.
-    size = y.size + (s.FRAME_LENGTH//2)*2
-    y_padded = librosa.util.pad_center(y, size=size, axis=0)
-    
+      
     # Frame audio (n_frames x frame_len)
-    y_framed = librosa.util.frame(y_padded,
+    y_framed = librosa.util.frame(y,
                                   frame_length=s.FRAME_LENGTH,
                                   hop_length=s.HOP_LENGTH, axis=0)
     
@@ -99,8 +94,9 @@ def calculate_stft_frames(y):
                                       arr=y_framed,
                                       n_fft=s.N_FFT,
                                       hop_length=s.STFT_HOP,
-                                      win_length=s.STFT_LEN)
-
+                                      win_length=s.STFT_LEN, 
+                                      center=True)
+    
     return stft_frames
 
 
@@ -126,6 +122,7 @@ def calculate_melspectrogram(y):
                                        n_fft=s.FRAME_LENGTH,
                                        hop_length=s.HOP_LENGTH,
                                        n_mels=s.N_MELS,
+                                       center=False,
                                        fmin=s.FMIN,
                                        fmax=s.FMAX)
     
@@ -146,13 +143,9 @@ def calculate_cwt(y):
     # Compute continuous wavelet transform
     wavelet_coeffs, wavelet_freqs = apply_cwt(y, scales)
     cwt = librosa.amplitude_to_db(np.abs(wavelet_coeffs), ref=np.max)
-    
-    # Pad cwt to match librosa frame offset in STFT/MFCC etc.
-    size = cwt.shape[1] + (s.FRAME_LENGTH//2)*2
-    cwt_padded = librosa.util.pad_center(cwt, size=size, axis=1)
       
     # Split coefficients into frames along sample axis
-    cwt_framed = librosa.util.frame(cwt_padded,
+    cwt_framed = librosa.util.frame(cwt,
                                     frame_length=s.FRAME_LENGTH,
                                     hop_length=s.HOP_LENGTH, axis=1)
     
@@ -184,35 +177,4 @@ def apply_cwt(y, scales):
                                              sampling_period=1/s.SR)
 
     return wavelet_coeffs, wavelet_freqs
-
-
-def calculate_smile(y):
-    """Frame data and extract openSMILE features for each frame."""
-    
-    # Pad cwt to match librosa frame offset in STFT/MFCC etc.
-    size = y.shape[0] + (s.FRAME_LENGTH//2)*2
-    y_padded = librosa.util.pad_center(y, size=size, axis=0)
-    
-    # Split into frames
-    y_frames = librosa.util.frame(y_padded,
-                                  frame_length=s.FRAME_LENGTH,
-                                  hop_length=s.HOP_LENGTH, axis=0)    
-
-    smile_features = np.apply_along_axis(extract_smile_feature_vector, 1, 
-                                         y_frames)
-   
-    return smile_features
-
-
-def extract_smile_feature_vector(y_frame):
-    """Extract smile feature vector for a single frame."""
-    
-    smile = opensmile.Smile(
-        feature_set=opensmile.FeatureSet.eGeMAPSv02,
-        feature_level=opensmile.FeatureLevel.Functionals,
-    )
-    
-    feature_vector = smile.process_signal(y_frame, s.SR).iloc[0].to_numpy()
-    
-    return feature_vector
 

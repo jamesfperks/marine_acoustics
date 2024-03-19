@@ -36,9 +36,9 @@ def get_call_indexes(logs, sr_default):
     and end of each call for the resampled audio."""
     
     original_audio_indexes = logs[['Beg File Samp (samples)',
-                                   'End File Samp (samples)']].to_numpy()
+                                   'End File Samp (samples)']].to_numpy() - 1
     
-    call_indexes = np.rint(s.SR*original_audio_indexes/sr_default) - 1
+    call_indexes = np.rint(s.SR*original_audio_indexes/sr_default)
     
     return call_indexes
 
@@ -55,13 +55,13 @@ def index2frame(call_indexes):
     # Start frame idx given by the last frame a sample idx is in
     call_start_idxs = call_indexes[:,0]
     offset = int(s.FRAME_LENGTH // 2)
+    offset = 0
     start_frame_idxs = np.asarray((call_start_idxs+offset)//s.HOP_LENGTH,
                                  dtype=int)
 
     # End frame idx given by the first frame a sample idx is in
     call_end_idxs = call_indexes[:,1]
-    end_frame_idxs = np.asarray(call_end_idxs//s.HOP_LENGTH, dtype=int)
-    
+    end_frame_idxs = np.asarray((call_end_idxs-s.FRAME_LENGTH+s.HOP_LENGTH)//s.HOP_LENGTH, dtype=int)
     frame_indexes = np.column_stack((start_frame_idxs, end_frame_idxs))
 
     return frame_indexes
@@ -108,6 +108,8 @@ def apply_labels(y_features, frame_indexes, multi_class_labels):
     # Apply labels to section of annotated frames
     for i in range(frame_indexes.shape[0]):
         start, end = frame_indexes[i]
+        if end > len(feature_labels):
+            end = len(feature_labels)
         label = multi_class_labels[i]
         annotated_indexes = np.arange(start, end+1)
         old_section_labels = feature_labels[annotated_indexes]
