@@ -22,7 +22,7 @@ SEED = 12345         # Set random seed
 # -----------------------------------------------------------------------------
 TRAIN_SITES = [10]         # Sites for training (E.g. [1,4])
  
-TEST_SITES = [7]           # Sites for testing.
+TEST_SITES = [9]           # Sites for testing.
                            # [] defaults to all sites not used in training.
                                  
 
@@ -47,13 +47,13 @@ IS_TEST_BALANCED = True         # Balance the positive and negative class
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'HGB'        # [HGB, CNN]
+MODEL = 'CNN'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'DFT'  # [MFCC, DFT, MEL, CWT, SMILE]
-                         # [STFT, CWT_FRAME]
+FEATURES = 'CWT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
+                         # 2D [STFT]
 
 
 # FRAME DURATION AND OVERLAP
@@ -84,7 +84,7 @@ N_MELS = 16             # no. Mel bands used in mfcc calc (default 128)
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
 WAVELET = 'shan0.07-0.8'     # select wavelet
-CWT_FREQ_RES = 1          # Frequency resolution of cwt
+CWT_FREQ_RES = 0.5          # Frequency resolution of cwt
 
 
 """
