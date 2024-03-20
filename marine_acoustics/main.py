@@ -11,7 +11,8 @@ Email: jamesperks@outlook.com
 import time
 from marine_acoustics.configuration import intro
 from marine_acoustics.data_processing import make_dataset
-from marine_acoustics.model import train, predict, evaluate
+from marine_acoustics.model import train, predict
+from marine_acoustics.results import evaluate
 
 
 def run():

@@ -6,7 +6,7 @@ Evaluate the model performance.
 
 import numpy as np
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.model import metrics
+from marine_acoustics.results import metrics
 
 
 def get_results():
