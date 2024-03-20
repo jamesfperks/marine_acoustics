@@ -51,17 +51,15 @@ def index2frame(call_indexes):
     The end frame index is the first frame in which the end index appears.
     
     """
-    
     # Start frame idx given by the last frame a sample idx is in
     call_start_idxs = call_indexes[:,0]
-    offset = int(s.FRAME_LENGTH // 2)
-    offset = 0
-    start_frame_idxs = np.asarray((call_start_idxs+offset)//s.HOP_LENGTH,
-                                 dtype=int)
+    start_frame_idxs = np.asarray(call_start_idxs//s.HOP_LENGTH, dtype=int)
 
     # End frame idx given by the first frame a sample idx is in
     call_end_idxs = call_indexes[:,1]
-    end_frame_idxs = np.asarray((call_end_idxs-s.FRAME_LENGTH+s.HOP_LENGTH)//s.HOP_LENGTH, dtype=int)
+    end_frame_idxs = np.asarray((call_end_idxs - s.FRAME_LENGTH + 
+                                 s.HOP_LENGTH)//s.HOP_LENGTH, dtype=int)
+    
     frame_indexes = np.column_stack((start_frame_idxs, end_frame_idxs))
 
     return frame_indexes
