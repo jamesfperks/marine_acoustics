@@ -8,7 +8,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
-import matplotlib.pyplot as plt
 import numpy as np
 
 from joblib import dump
@@ -16,6 +15,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from marine_acoustics.configuration import settings as s
 from marine_acoustics.data_processing import sample
 from marine_acoustics.model.cnn import LeNet
+from marine_acoustics.model import train_utils
 
 
 def train_classifier():
@@ -62,28 +62,22 @@ def train_cnn(X_train, y_train):
     X_train, y_train = sample.numpy_to_tensor(X_train, y_train)
     
     torch.manual_seed(s.SEED)
-    n_epochs = 10
-    batch_size_train = 16
-    learning_rate = 0.01
-    momentum = 0.5
-    
-    
+
     # Train loader accepts list(zip(X_train, y_train)
     # Train_samples can be indexed [i] to give (X[i], y[i])
-    
     loader = torch.utils.data.DataLoader(list(zip(X_train, y_train)),
-                                        batch_size=batch_size_train,
+                                        batch_size=s.BATCH_SIZE,
                                         shuffle=True)
     
     model = LeNet()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate,
-                      momentum=momentum)
+    optimizer = optim.SGD(model.parameters(), lr=s.LR,
+                      momentum=s.MOMENTUM)
     loss_fn = nn.BCELoss()
     
     # Train the model
     model.train()
     epoch_loss = []
-    for epoch in range(n_epochs):    
+    for epoch in range(s.N_EPOCHS):    
         acc_loss = 0
         for X_batch, y_batch in loader:
             optimizer.zero_grad()
@@ -96,13 +90,8 @@ def train_cnn(X_train, y_train):
         # Average batch loss over one epoch
         epoch_loss.append(acc_loss / len(loader))
         
-    plt.figure()
-    plt.plot(range(1, n_epochs+1), epoch_loss, color='blue')
-    plt.title('Training loss per epoch')
-    plt.legend(['Training Loss'], loc='upper right')
-    plt.xlabel('Epoch Number')
-    plt.ylabel('Training loss (Binary Cross Entropy loss)')
-
+    # Plot training loss per epoch
+    train_utils.plot_training_loss(epoch_loss)
     
     # Save model
     torch.save(model.state_dict(), s.SAVE_MODEL_FILEPATH + '/CNN')

@@ -52,14 +52,14 @@ MODEL = 'CNN'        # [HGB, CNN]
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'CWT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
+FEATURES = 'STFT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
                          # 2D [STFT]
 
 
 # FRAME DURATION AND OVERLAP
 # -----------------------------------------------------------------------------
 FRAME_DURATION = 3000    # Frame duration in milliseconds
-FRAME_ADVANCE = 1500     # Frame advance in milliseconds
+FRAME_ADVANCE = 1000     # Frame advance in milliseconds
 
 STFT_DURATION = 1024     # STFT window duration 
 STFT_ADVANCE = 100       # STFT window advance in milliseconds
@@ -68,7 +68,7 @@ STFT_ADVANCE = 100       # STFT window advance in milliseconds
 # FREQUENCY RANGE
 # -----------------------------------------------------------------------------
 FMAX = 29               # Frequency lower bound used in MFCC, STFT features
-FMIN = 15               # Frequency upper bound used in MFCC, STFT features
+FMIN = 14               # Frequency upper bound used in MFCC, STFT features
 
 
 # MFCC CONSTANTS
@@ -93,6 +93,14 @@ Examples of good wavelet choices:
 'cmor25-2.0'           complex morlet (bandwidth = 25 centre freq = 2.0)
 'shan0.07-0.8'         shannon (bandwidth = 0.07 centre freq = 0.8)
 """
+
+
+# CNN TRAINING CONSTANTS
+# -----------------------------------------------------------------------------
+N_EPOCHS = 10
+BATCH_SIZE = 16
+LR = 0.01
+MOMENTUM = 0.5
 
 
 # EVALUATION CONSTANTS
