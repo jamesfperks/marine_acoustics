@@ -34,7 +34,7 @@ def extract_features(y):
       
     # 2D Features
     elif s.FEATURES == 'STFT':
-        y_features = calculate_stft_frames(y)    # Calculate STFT frames
+        y_features = calculate_stft(y)    # Calculate STFT frames
         
     elif s.FEATURES == 'CWT':
         y_features = calculate_cwt(y)    # Calculate STFT frames
@@ -110,7 +110,7 @@ def calculate_cwt_avg(y):
     return cwt_avg
 
 
-def calculate_stft_frames(y):
+def calculate_stft(y):
     """Frame audio and calculate STFT for each frame."""
       
     # Frame audio (n_frames x frame_len)
