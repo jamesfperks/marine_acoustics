@@ -52,7 +52,7 @@ MODEL = 'CNN'        # [HGB, CNN]
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
+FEATURES = 'CWT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
                          # 2D [STFT]
 
 
@@ -84,8 +84,6 @@ N_MELS = 16             # no. Mel bands used in mfcc calc (default 128)
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
 WAVELET = 'shan0.07-0.8'     # select wavelet
-CWT_FREQ_RES = 0.5          # Frequency resolution of cwt
-
 
 """
 Examples of good wavelet choices:

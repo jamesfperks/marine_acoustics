@@ -5,6 +5,7 @@ Frame audio and extract features.
 
 
 import librosa
+import pywt
 import numpy as np
 
 from marine_acoustics.configuration import settings as s
@@ -103,29 +104,10 @@ def calculate_mfccs(y):
 def calculate_cwt_avg(y):
     """Return the avg. coeffs for each cwt frame."""
     
-    cwt_frames = utils.calculate_cwt_frames(y)   
-    cwt_avg = np.mean(cwt_frames, axis=1)
+    cwt_strided_frames = calculate_cwt(y)  
+    cwt_avg = np.mean(cwt_strided_frames, axis=1)
     
     return cwt_avg
-
-
-def calculate_cwt(y):
-    """Return smoothed cwt coeffs to match CNN size for each frame."""
-    
-    # (n_frames x n_coefs_per_frame x n_freq_bins)
-    cwt_frames = utils.calculate_cwt_frames(y)
-    
-    # Reshape to (n_frames x n_cnn_width x n_coeffs_to_avg x n_freq_bins)
-    cnn_width = 30
-    n_coeffs_to_avg = cwt_frames.shape[1]//cnn_width
-    cwt_reshape = librosa.util.frame(cwt_frames,
-                                  frame_length=n_coeffs_to_avg,
-                                  hop_length=n_coeffs_to_avg, axis=1)
-
-    # Average adjacent coeffs to get (n_frames x n_cnn_width x n_freq_bins)
-    cwt = np.mean(cwt_reshape, axis=2)
-    
-    return cwt
 
 
 def calculate_stft_frames(y):
@@ -143,4 +125,37 @@ def calculate_stft_frames(y):
                                       arr=y_framed)
     
     return stft_frames
+
+
+def calculate_cwt(y):
+    """Compute cwt scalogram for each frame.
+    
+    Matches the number of dimensions in STFT in both time and frequency axes.
+    
+    Returns: (n_frames x n_coefs_per_frame x n_freq_bins)
+        
+    """
+    
+    # Compute n_scales to match n_STFT_freq_bins
+    fmin_idx, fmax_idx = utils.get_stft_freq_indexes(s.N_FFT)
+    n_scales = 1+fmax_idx-fmin_idx
+    
+    # Choose wavelet scales (pywt freq2scale uses normalised frequency)
+    desired_freqs = np.linspace(s.FMIN, s.FMAX+1, num=n_scales)
+    scales = pywt.frequency2scale(s.WAVELET, desired_freqs/s.SR)
+
+    # Compute continuous wavelet transform (n_samples x n_freq_bins)
+    wavelet_coeffs, wavelet_freqs = pywt.cwt(y, scales, s.WAVELET,
+                                             sampling_period=1/s.SR)
+    cwt = librosa.amplitude_to_db(np.abs(wavelet_coeffs), ref=np.max).T
+
+    # Frame cwt along sample axis (n_frames x n_coefs_per_frame x n_freq_bins)
+    cwt_frames = librosa.util.frame(cwt,
+                                    frame_length=s.FRAME_LENGTH,
+                                    hop_length=s.HOP_LENGTH, axis=0)
+
+    # Subsample coefficients axis to equal hop length of STFT
+    cwt_strided_frames = cwt_frames[:, ::s.STFT_HOP, :]
+    
+    return cwt_strided_frames
 
