@@ -27,7 +27,7 @@ def make_dataset():
     df_testset = selector.select_test_set(df_annotations)
     
     # Print training and test set summary
-    selector.print_selection_summary(df_trainset, df_testset)
+    selector.print_train_test_selection(df_trainset, df_testset)
     
     # Get training samples
     train_samples = get_training_samples(df_trainset, df_folder_structure)

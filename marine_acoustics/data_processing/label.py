@@ -17,13 +17,9 @@ def label_features(y_features, logs, sr_default):
     
     # Convert call indexes to frame indexes
     frame_indexes = index2frame(call_indexes)
-
-    # Convert labels in logs to multi-class numeric labels
-    multi_class_labels = get_multi_class_labels(logs)
     
     # Apply whale call labels to features
-    feature_labels = apply_labels(y_features, frame_indexes,
-                                  multi_class_labels)
+    feature_labels = apply_labels(y_features, frame_indexes)
 
     # Create list of sample tuples [(X1, y1), ...]
     y_labelled_features = list(zip(y_features, feature_labels))
@@ -51,6 +47,9 @@ def index2frame(call_indexes):
     The end frame index is the first frame in which the end index appears.
     
     """
+    
+    #Label for when frame duration is less than call duration
+    # Tested to work well for 3 second frame duration on A and Z calls
     # Start frame idx given by the last frame a sample idx is in
     call_start_idxs = call_indexes[:,0]
     start_frame_idxs = np.asarray(call_start_idxs//s.HOP_LENGTH, dtype=int)
@@ -61,9 +60,33 @@ def index2frame(call_indexes):
                                  s.HOP_LENGTH)//s.HOP_LENGTH, dtype=int)
     
     frame_indexes = np.column_stack((start_frame_idxs, end_frame_idxs))
-
+    
     return frame_indexes
 
+
+def apply_labels(y_features, frame_indexes):
+    """
+    Any feature not contained within an annotated frame index is assumed to
+    be background, 0. All frames within annotated call indexes are labelled 1.
+    
+    """
+
+    # Initially assume all features are background "0"
+    feature_labels = np.zeros(y_features.shape[0])
+    
+    # Apply labels to section of annotated frames
+    for i in range(frame_indexes.shape[0]):
+        start, end = frame_indexes[i]
+        
+        if end >= len(feature_labels):
+            end = len(feature_labels)-1
+            
+        annotated_indexes = np.arange(start, end+1)
+        section_labels = np.ones(len(annotated_indexes),dtype=int)
+        feature_labels[annotated_indexes] = section_labels
+
+    return feature_labels
+    
 
 def get_multi_class_labels(logs):
     """
@@ -91,38 +114,4 @@ def get_multi_class_labels(logs):
     
     return multi_class_labels
 
-
-def apply_labels(y_features, frame_indexes, multi_class_labels):
-    """
-    Return a list of multi-class numeric labels corresponding to each feature.
-    Any feature not contained within an annotated frame index is assumed to
-    be background, 0.
-    
-    """
-
-    # Initially assume all features are background "0"
-    feature_labels = np.zeros(y_features.shape[0])
-    
-    # Apply labels to section of annotated frames
-    for i in range(frame_indexes.shape[0]):
-        start, end = frame_indexes[i]
-        if end > len(feature_labels):
-            end = len(feature_labels)
-        label = multi_class_labels[i]
-        annotated_indexes = np.arange(start, end+1)
-        old_section_labels = feature_labels[annotated_indexes]
-        new_section_labels = np.full(len(annotated_indexes), label,
-                                     dtype=float)
-        
-        # Replace label with nan if attempting to label a feature which already
-        # has been assigned a different label
-        for i in range(len(old_section_labels)):
-            if old_section_labels[i] not in (0, label):
-                new_section_labels[i] = np.nan
-        
-        feature_labels[annotated_indexes] = new_section_labels
-
-    return feature_labels
-    
-    
     

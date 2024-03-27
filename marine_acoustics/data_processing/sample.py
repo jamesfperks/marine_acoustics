@@ -22,15 +22,12 @@ def get_samples(df_selected_dataset, df_folder_structure, is_train):
     sites = df_selected_dataset.index
     call_types = df_selected_dataset.columns
     sample_set = create_sample_set(sites, call_types, df_folder_structure)
-    
-    # Map multi class samples to binary for classification
-    binary_samples = multi_to_binary(sample_set, is_train)
-    
+        
     # Balance training samples and test samples (if selected)
     if (is_train == True) or (s.IS_TEST_BALANCED == True):
-        binary_samples = balance_dataset(binary_samples)
+        sample_set = balance_dataset(sample_set)
     
-    return binary_samples
+    return sample_set
 
 
 def create_sample_set(sites, call_types, df_folder_structure):
@@ -95,43 +92,6 @@ def extract_samples(site, gb_wavfile, df_folder_structure):
         site_samples.extend(y_labelled_features)
 
     return site_samples 
-
-
-def multi_to_binary(sample_set, is_train):
-    """Convert list of multi-class samples to binary 0-1 samples."""
-   
-    s
-    if is_train==True:
-        pos_labels = s.TRAIN_CALL_TYPES
-        neg_labels = s.TRAIN_NEGATIVE_CLASS
-        
-    else:
-        if s.TEST_CALL_TYPES == []:
-            pos_labels = s.TRAIN_CALL_TYPES
-        else:
-            pos_labels = s.TEST_CALL_TYPES
-    
-        neg_labels = s.TEST_NEGATIVE_CLASS
-        
-    # Default negative class is background "0" if none specified.
-    if neg_labels == []:
-        neg_labels = [0]
-    
-    
-    binary_samples = []
-
-    for i in range(len(sample_set)):
-        feature = sample_set[i][0]
-        label = sample_set[i][1]
-        
-        if label in pos_labels:
-            binary_samples.append((feature, 1))
-            
-        elif label in neg_labels:
-            binary_samples.append((feature, 0))
-         
-  
-    return binary_samples
 
 
 def balance_dataset(samples):

@@ -18,41 +18,29 @@ SAVE_MODEL_FILEPATH = 'models'
 SEED = 12345         # Set random seed
 
 
-# RECORDING SITE SELECTION
+# TRAIN AND TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_SITES = [10]         # Sites for training (E.g. [1,4])
+TRAIN_SITES = [10]      # Sites for training (E.g. [1,4])
  
-TEST_SITES = [9]           # Sites for testing.
-                           # [] defaults to all sites not used in training.
+TEST_SITES = [9]              # Sites for testing.
                                  
-
-# CALL TYPE SELECTION
-# -----------------------------------------------------------------------------
 TRAIN_CALL_TYPES = [3]        # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
 
-
-# BINARY CLASSIFICATION
-# -----------------------------------------------------------------------------
-# Select call type for the negative class. [] defaults to background.
-
-TRAIN_NEGATIVE_CLASS = []       # Negative class for training
-TEST_NEGATIVE_CLASS = []         # Negative class for testing
-
-IS_TEST_BALANCED = True         # Balance the positive and negative class
-                                # in the test set (True/False)
+IS_TEST_BALANCED = True       # Balance the positive and negative class
+                              # in the test set (True/False)
 
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGB, CNN]
+MODEL = 'HGB'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'CWT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
+FEATURES = 'DFT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
                          # 2D [STFT]
 
 
@@ -61,9 +49,9 @@ FEATURES = 'CWT'     # 1D [DFT, MEL, MFCC, CWT_AVG]
 FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_ADVANCE = 1000     # Frame advance in milliseconds
 
-STFT_DURATION = 1024     # STFT window duration 
-STFT_ADVANCE = 100       # STFT window advance in milliseconds
-       
+STFT_DURATION = 2048     # STFT window duration 
+STFT_ADVANCE = 500       # STFT window advance in milliseconds
+
 
 # FREQUENCY RANGE
 # -----------------------------------------------------------------------------
@@ -83,13 +71,14 @@ N_MELS = 16             # no. Mel bands used in mfcc calc (default 128)
 
 # WAVELET CONSTANTS
 # -----------------------------------------------------------------------------
-WAVELET = 'shan0.07-0.8'     # select wavelet
+WAVELET = 'shan0.01-0.6'     # select wavelet
 
 """
 Examples of good wavelet choices:
     
 'cmor25-2.0'           complex morlet (bandwidth = 25 centre freq = 2.0)
 'shan0.07-0.8'         shannon (bandwidth = 0.07 centre freq = 0.8)
+'shan0.01-0.6'
 """
 
 
@@ -125,7 +114,7 @@ HOP_LENGTH = round(SR*FRAME_ADVANCE/1000)       # hop length (samples)
 
 STFT_LEN = round(SR*STFT_DURATION/1000)         # stft window length (samples)
 STFT_HOP = round(SR*STFT_ADVANCE/1000)          # stft hop (samples)
-N_FFT = STFT_LEN*2       # Pad STFT window with zeros to increase n_freq_bins
+N_FFT = STFT_LEN       # Pad STFT window with zeros to increase n_freq_bins
 
 #------------------------------------------------------------------------------
 
