@@ -34,6 +34,9 @@ def extract_features(y):
         
     elif s.FEATURES == 'STFT_STATS':
         y_features = stft_stats(y)   # Summary stats for STFT
+        
+    elif s.FEATURES == 'CWT_STATS':
+        y_features = cwt_stats(y)    # Summary stats for CWT
       
     # 2D Features
     elif s.FEATURES == 'STFT':
@@ -144,7 +147,30 @@ def stft_stats(y):
     stft_summary_stats = np.hstack((mean, variance, skewness, kurtosis))
     
     return stft_summary_stats
+
+
+def cwt_stats(y):
+    """Return summary statistics along the time dimension
+    for each CWT scalogram frame.
     
+    CWT is (time x freq)
+    
+    Return (1 x freq)
+    """
+    
+    # (n_frames x n_windows x n_freq_bins)
+    cwt_frames = calculate_cwt(y)
+    
+    
+    stats = describe(cwt_frames, axis=1)
+    mean = stats.mean
+    variance = stats.variance
+    skewness = stats.skewness
+    kurtosis = stats.kurtosis
+    
+    cwt_summary_stats = np.hstack((mean, variance, skewness, kurtosis))
+    
+    return cwt_summary_stats
     
 
 
