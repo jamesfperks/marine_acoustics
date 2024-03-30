@@ -87,7 +87,7 @@ def calculate_mel_scale_dft(y):
 def calculate_mfccs(y):
     """Frame data and compute MFCCs for each frame."""
     
-    # Calculate MFCCs
+    # Calculate MFCCs (n_frames x n_mfccs)
     mfccs = librosa.feature.mfcc(y=y,
                                  sr=s.SR,
                                  n_mfcc=s.N_MFCC,
@@ -98,7 +98,17 @@ def calculate_mfccs(y):
                                  fmin=s.FMIN,
                                  fmax=s.FMAX).T
     
-    return mfccs
+
+    mfcc_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH, order=1,
+                                        axis=1, mode='interp')
+    
+    
+    mfcc_delta_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH,
+                                              order=2, axis=1, mode='interp')
+    
+    mfcc_features = np.vstack((mfccs, mfcc_deltas, mfcc_delta_deltas))
+    
+    return mfcc_features
   
 
 def calculate_cwt_avg(y):
