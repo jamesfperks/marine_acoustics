@@ -22,7 +22,7 @@ SEED = 12345         # Set random seed
 # -----------------------------------------------------------------------------
 TRAIN_SITES = [10]      # Sites for training (E.g. [1,4])
  
-TEST_SITES = [3]              # Sites for testing.
+TEST_SITES = [9]              # Sites for testing.
                                  
 TRAIN_CALL_TYPES = [3]        # Call types for training
 
@@ -40,7 +40,7 @@ MODEL = 'HGB'        # [HGB, CNN]
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'MFCC'     # 1D [DFT, MEL, MFCC, CWT_AVG]
+FEATURES = 'STFT_STATS'     # 1D [DFT, MEL, MFCC, CWT_AVG, STFT_STATS]
                          # 2D [STFT]
 
 
@@ -50,7 +50,7 @@ FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_ADVANCE = 1000     # Frame advance in milliseconds
 
 STFT_DURATION = 2048     # STFT window duration 
-STFT_ADVANCE = 100       # STFT window advance in milliseconds
+STFT_ADVANCE = 500       # STFT window advance in milliseconds
 
 
 # FREQUENCY RANGE

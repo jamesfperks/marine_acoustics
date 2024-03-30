@@ -7,7 +7,7 @@ Frame audio and extract features.
 import librosa
 import pywt
 import numpy as np
-
+from scipy.stats import describe
 from marine_acoustics.configuration import settings as s
 from marine_acoustics.data_processing import feature_utils as utils
 
@@ -31,6 +31,9 @@ def extract_features(y):
         
     elif s.FEATURES == 'CWT_AVG':
         y_features = calculate_cwt_avg(y)   # Calculate CWT average per frame
+        
+    elif s.FEATURES == 'STFT_STATS':
+        y_features = stft_stats(y)   # Summary stats for STFT
       
     # 2D Features
     elif s.FEATURES == 'STFT':
@@ -97,16 +100,15 @@ def calculate_mfccs(y):
                                  center=False,
                                  fmin=s.FMIN,
                                  fmax=s.FMAX).T
-    
-
+   
     mfcc_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH, order=1,
                                         axis=1, mode='interp')
     
     
     mfcc_delta_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH,
                                               order=2, axis=1, mode='interp')
-    
-    mfcc_features = np.vstack((mfccs, mfcc_deltas, mfcc_delta_deltas))
+
+    mfcc_features = np.hstack((mfccs, mfcc_deltas, mfcc_delta_deltas))
     
     return mfcc_features
   
@@ -118,6 +120,32 @@ def calculate_cwt_avg(y):
     cwt_avg = np.mean(cwt_strided_frames, axis=1)
     
     return cwt_avg
+
+
+def stft_stats(y):
+    """Return summary statistics along the time dimension
+    for each STFT spectrogram frame.
+    
+    STFT is (time x freq)
+    
+    Return (1 x freq)
+    """
+    
+    # (n_frames x n_windows x n_freq_bins)
+    stft_frames = calculate_stft(y)
+    
+    
+    stats = describe(stft_frames, axis=1)
+    mean = stats.mean
+    variance = stats.variance
+    skewness = stats.skewness
+    kurtosis = stats.kurtosis
+    
+    stft_summary_stats = np.hstack((mean, variance, skewness, kurtosis))
+    
+    return stft_summary_stats
+    
+    
 
 
 def calculate_stft(y):
