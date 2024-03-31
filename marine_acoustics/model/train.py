@@ -47,7 +47,9 @@ def train_classifier():
 def train_grad_boost(X_train, y_train):
     """Train scikit learn HistGradientBoostingClassifier."""
     
-    model = HistGradientBoostingClassifier(random_state=s.SEED).fit(X_train,
+    model = HistGradientBoostingClassifier(random_state=s.SEED,
+                                           validation_fraction=0.15,
+                                           early_stopping='True').fit(X_train,
                                                                     y_train)
     
     dump(model, s.SAVE_MODEL_FILEPATH + '/HGB')
