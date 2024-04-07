@@ -11,18 +11,18 @@ All global constants are defined here.
 
 # GENERAL CONSTANTS
 # -----------------------------------------------------------------------------
-DATA_FILEPATH = 'data/raw/AcousticTrends_BlueFinLibrary'
-SAVE_DATA_FILEPATH = 'data/processed'
-SAVE_PREDICTIONS_FILEPATH = 'predictions'
-SAVE_MODEL_FILEPATH = 'models'
+DATA_FILEPATH = 'data/AcousticTrends_BlueFinLibrary'
+SAVE_DATA_FILEPATH = 'logs/data/'
+SAVE_PREDICTIONS_FILEPATH = 'logs/predictions/demo/'
+SAVE_MODEL_FILEPATH = 'logs/models/demo/'
 SEED = 12345         # Set random seed
 
 
 # TRAIN AND TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_SITES = [10]      # Sites for training (E.g. [1,4])
+TRAIN_SITES = [1]      # Sites for training (E.g. [1,4])
  
-TEST_SITES = [9]              # Sites for testing.
+TEST_SITES = [2]                    # Sites for testing.
                                  
 TRAIN_CALL_TYPES = [3]        # Call types for training
 
@@ -40,7 +40,7 @@ MODEL = 'HGB'        # [HGB, CNN]
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'CWT_AVG'
+FEATURES = 'DFT'
 
 # 1D [DFT, MEL, MFCC, CWT_AVG, STFT_STATS, CWT_STATS]
 # 2D [STFT, CWT]
@@ -84,12 +84,13 @@ Examples of good wavelet choices:
 """
 
 
-# CNN TRAINING CONSTANTS
+# CNN CONSTANTS
 # -----------------------------------------------------------------------------
 N_EPOCHS = 10
 BATCH_SIZE = 16
 LR = 0.01
 MOMENTUM = 0.5
+PRED_BATCH_SIZE = 1000
 
 
 # EVALUATION CONSTANTS

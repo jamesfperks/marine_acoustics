@@ -21,8 +21,11 @@ def run():
     # Start script
     intro.print_introduction()
     
-    # Extract and save train and test sets
-    make_dataset.make_dataset()
+    # Extract and save training set
+    make_dataset.get_train_samples()
+    
+    # Extract and save test set
+    make_dataset.get_test_samples()
     
     # Train model
     train.train_classifier()

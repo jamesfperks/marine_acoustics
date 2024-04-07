@@ -12,7 +12,8 @@ from marine_acoustics.data_processing import feature_utils
 
 
 def plot_scalogram(y, wavelet=s.WAVELET, ylim=[s.FMIN, s.FMAX],
-                   hop_length=s.STFT_HOP, n_scales=None, colorbar=True):
+                   hop_length=s.STFT_HOP, n_scales=None, colorbar=True,
+                   ax=None, title="Wavelet Scalogram"):
     """Plot the wavelet scalogram. Default to main script settings."""
 
     if n_scales==None:
@@ -36,10 +37,12 @@ def plot_scalogram(y, wavelet=s.WAVELET, ylim=[s.FMIN, s.FMAX],
     t = np.linspace(0, len(y)/s.SR, num=cwt_strided.shape[1])
     
     # Plot the wavelet scalogram.
-    plt.pcolormesh(t, wavelet_freqs, cwt_strided, cmap='magma')
-    plt.xlabel("Time (s)")
-    plt.ylabel("Pseudo-frequency (Hz)")
-    plt.title("Wavelet Scalogram")
+    if ax==None:
+        ax = plt.axes()
+    im = ax.pcolormesh(t, wavelet_freqs, cwt_strided, cmap='magma')
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Pseudo-frequency (Hz)")
+    ax.set_title(title)
     if colorbar:
-        plt.colorbar(format="%+2.f dB")
+        plt.colorbar(im, format="%+2.f dB")
         

@@ -4,15 +4,16 @@ Extract samples from the raw .wav files
 """
 
 
+import os
 import random
 import torch
 import numpy as np
 import pandas as pd
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.data_processing import read, features, label
+from marine_acoustics.data_processing import info, read, features, label
 
 
-def get_samples(df_selected_dataset, df_folder_structure, is_train):
+def get_samples(df_selected_dataset, is_train):
     """
     Get sample set from selected sites and call types.
     Returns samples as a list of tuples [(X1, y1), (X2, y2), ...]
@@ -21,19 +22,18 @@ def get_samples(df_selected_dataset, df_folder_structure, is_train):
     # Sample from selected sites and call types
     sites = df_selected_dataset.index
     call_types = df_selected_dataset.columns
-    sample_set = create_sample_set(sites, call_types, df_folder_structure)
-        
-    # Balance training samples and test samples (if selected)
-    if (is_train == True) or (s.IS_TEST_BALANCED == True):
-        sample_set = balance_dataset(sample_set)
+    df_folder_structure = info.get_folder_structure()
+    X, y = create_sample_set(sites, call_types,
+                                   df_folder_structure, is_train)
     
-    return sample_set
+    return X, y
 
 
-def create_sample_set(sites, call_types, df_folder_structure):
+def create_sample_set(sites, call_types, df_folder_structure, is_train):
     """Return a list of samples from given sites and call-types"""
     
-    sample_set = []
+    # Empty temp data folder
+    empty_temp_data_dir(is_train)
     
     for site in sites:
         
@@ -43,15 +43,56 @@ def create_sample_set(sites, call_types, df_folder_structure):
         # Groupby .wav filename
         gb_wavfile = df_logs.groupby('Begin File')
         
-        # Generate labelled samples from site
-        site_samples = extract_samples(site, gb_wavfile,
-                                       df_folder_structure)
-        
-        # Add to sample set
-        sample_set.extend(site_samples)
+        # Generate labelled samples from site and write to temp data folder
+        extract_samples(site, gb_wavfile, df_folder_structure, is_train)
     
-    return sample_set
+    X, y = combine_site_samples(is_train)
+    
+    return X, y
 
+
+def empty_temp_data_dir(is_train):
+    """Empty temporary data folder."""
+    
+    # Empty temp data folder
+    if is_train:
+        temp_data_dir = 'temp/train-data/'
+    else:
+        temp_data_dir = 'temp/test-data/'
+        
+    X_data_dir = s.SAVE_DATA_FILEPATH + temp_data_dir + 'X/'
+    y_data_dir = s.SAVE_DATA_FILEPATH + temp_data_dir + 'y/'
+    
+    X_filepaths = [X_data_dir + fname for fname in os.listdir(X_data_dir)]
+    y_filepaths = [y_data_dir + fname for fname in os.listdir(y_data_dir)]
+    
+    for file in X_filepaths:
+        os.remove(file)
+        
+    for file in y_filepaths:
+        os.remove(file)
+        
+
+def combine_site_samples(is_train):
+    """Read in X, y for each site and combine. Remove file in temp folder
+    after concatenation."""
+    
+    if is_train:
+        temp_data_dir = 'temp/train-data/'
+    else:
+        temp_data_dir = 'temp/test-data/'
+        
+    X_data_dir = s.SAVE_DATA_FILEPATH + temp_data_dir + 'X/'
+    y_data_dir = s.SAVE_DATA_FILEPATH + temp_data_dir + 'y/'
+        
+    X_filepaths = [X_data_dir + fname for fname in os.listdir(X_data_dir)]
+    y_filepaths = [y_data_dir + fname for fname in os.listdir(y_data_dir)]
+    
+    X = np.concatenate([np.load(path) for path in X_filepaths])
+    y = np.concatenate([np.load(path) for path in y_filepaths])
+    
+    return X, y
+    
 
 def concat_call_logs(site, call_types, df_folder_structure):
     """Return a df of all call logs for a given site and list of call types."""
@@ -69,10 +110,8 @@ def concat_call_logs(site, call_types, df_folder_structure):
     return df_logs
 
 
-def extract_samples(site, gb_wavfile, df_folder_structure):
+def extract_samples(site, gb_wavfile, df_folder_structure, is_train):
     """Generate labelled samples for a site given all call logs."""
-    
-    site_samples = []
     
     # For .wav in groupby object
     for wavfile, logs in gb_wavfile:
@@ -88,10 +127,21 @@ def extract_samples(site, gb_wavfile, df_folder_structure):
                                                    logs,
                                                    sr_default)
         
-        # Add samples to site samples
-        site_samples.extend(y_labelled_features)
-
-    return site_samples 
+        # Balance training samples and test samples (if selected)
+        if (is_train == True) or (s.IS_TEST_BALANCED == True):
+            y_labelled_features = balance_dataset(y_labelled_features)
+        
+        if len(y_labelled_features) > 0:
+            X_wav, y_wav = split_samples(y_labelled_features)
+            if is_train:
+                temp_data_fp = s.SAVE_DATA_FILEPATH + 'temp/train-data/'
+            else:
+                temp_data_fp = s.SAVE_DATA_FILEPATH + 'temp/test-data/'
+                
+            X_data_fp = temp_data_fp + 'X/' + site + '-' + wavfile + '-X.npy'
+            y_data_fp = temp_data_fp + 'y/' + site + '-' + wavfile + '-y.npy' 
+            np.save(X_data_fp, X_wav)
+            np.save(y_data_fp, y_wav)
 
 
 def balance_dataset(samples):
@@ -107,11 +157,11 @@ def balance_dataset(samples):
         else:
             zero_indexes.append(i)
     
-    
     if len(zero_indexes) > len(one_indexes):
         major_indexes = zero_indexes
         min_indexes = one_indexes
     else:
+        print('Warning: undersampling majority class whale calls')
         major_indexes = one_indexes
         min_indexes = zero_indexes
         
@@ -125,7 +175,7 @@ def balance_dataset(samples):
     
     # Index samples using balanced indexes
     balanced_samples = [samples[i] for i in balanced_indexes]
-    
+
     return balanced_samples
 
 
@@ -138,12 +188,12 @@ def split_samples(samples):
       
     """
     
-    X, y = [], []
-    for sample in samples:
-        X.append(sample[0])
-        y.append(sample[1])
+    y = np.asarray([y for X, y in samples])
     
-    return np.asarray(X), np.asarray(y)
+    # Attempt to save memory by reassigning "samples" instead of creating X?
+    samples = np.asarray([X for X, y in samples])
+    
+    return samples, y
 
 
 def numpy_to_tensor(X, y):

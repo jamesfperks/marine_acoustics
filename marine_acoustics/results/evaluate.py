@@ -5,62 +5,85 @@ Evaluate the model performance.
 
 
 import numpy as np
+from scipy.signal import medfilt
 from marine_acoustics.configuration import settings as s
 from marine_acoustics.results import metrics
+from marine_acoustics.visualisation import roc
 
 
 def get_results():
     """Calculate and print classification scoring metrics."""
         
-    # Load ground truth labels
-    y_train = np.load(s.SAVE_DATA_FILEPATH + '/y_train.npy')
-    y_test = np.load(s.SAVE_DATA_FILEPATH + '/y_test.npy') 
+    # Load probabilities and ground truth labels
+    y_test, y_proba = load_predictions()
     
-    # Load predicted probabilities for positive class
-    y_train_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + '/y_train_proba.npy')
-    y_test_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + '/y_test_proba.npy')
+    # Convert to binary predictions
+    y_pred = (y_proba >= 0.5).astype(int)
     
-    # Class binary predictions
-    y_train_pred = (y_train_proba >= 0.5).astype(int)
-    y_test_pred = (y_test_proba >= 0.5).astype(int)
+    # Apply median filter
+    y_pred = medfilt(y_pred, kernel_size=s.MEDIAN_FILTER_SIZE)
     
-    # Accuracy
-    train_score, test_score = metrics.get_accuracy(y_train, y_train_pred,
-                                                   y_test, y_test_pred)
-    
-    # Median Filter Accuracy
-    train_med_score, test_med_score = metrics.median_filter_accuracy(y_train,
-                                            y_train_pred, y_test, y_test_pred)
-    
-    # Confusion matrix
-    c_matrix = metrics.calculate_confusion_matrix(y_test, y_test_pred)
-    
-    # F1
-    f1, f1_med = metrics.calculate_f1(y_test, y_test_pred)
-    
-    # Calculate AUC and plot ROC curve
-    roc_auc, medfilt_roc_auc = metrics.plot_roc(y_test, y_test_proba)
+    # Calculate metrics
+    metrics_dict = get_metrics(y_test, y_proba, y_pred)
     
     # Print results
-    print_results(train_score, test_score, train_med_score, test_med_score,
-                  c_matrix, f1, f1_med, roc_auc, medfilt_roc_auc)
+    print_results(metrics_dict)
 
 
-def print_results(train_score, test_score, train_med_score, test_med_score,
-                  c_matrix, f1, f1_med, roc_auc, medfilt_roc_auc):
+def load_predictions():
+    """Load predicted probabilities and the associated ground truth labels."""
+    
+    # Load ground truth labels
+    y_test = np.load(s.SAVE_DATA_FILEPATH + 'y_test.npy') 
+    
+    # Load predicted probabilities for positive class
+    y_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + s.MODEL + '-' +
+                           s.FEATURES + '-y-proba.npy')
+    
+    return y_test, y_proba
+
+
+def get_metrics(y_test, y_proba, y_pred):
+    """Return a dictionary containing a selection of evaluation metrics."""
+    
+    metrics_dict = {}
+    
+    # Accuracy
+    metrics_dict['accuracy'] = metrics.get_accuracy(y_test, y_pred)
+    
+    # Confusion matrix
+    metrics_dict['c_matrix'] = metrics.calculate_confusion_matrix(y_test, y_pred)
+    
+    # F1
+    metrics_dict['f1'] = metrics.calculate_f1(y_test, y_pred)
+    
+    # ROC curve
+    fpr, tpr, thresholds = metrics.compute_medfilt_roc(y_test, y_proba)
+    metrics_dict.update({'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
+    
+    # ROC AUC
+    metrics_dict['roc_auc'] = metrics.calculate_roc_auc(fpr, tpr)
+    
+    return metrics_dict
+
+
+def print_results(metrics_dict):
     """Print classification scoring metrics."""
+    
+    accuracy = metrics_dict['accuracy']
+    c_matrix = metrics_dict['c_matrix']
+    f1 = metrics_dict['f1']
+    fpr = metrics_dict['fpr']
+    tpr = metrics_dict['tpr']
+    roc_auc = metrics_dict['roc_auc']
+
     
     # Results Header
     print('\n' + '-'*s.HEADER_LEN + '\nRESULTS\n' + '-'*s.HEADER_LEN)
     
     # Accuracy
     print('\nAccuracy:\n' + '-'*s.SUBHEADER_LEN +
-          f'\n  - Training: {train_score:.3f}\n  - Testing: {test_score:.3f}')
-    
-    # Median Filter Accuracy
-    print('\n' + '\nMedian Filtered Accuracy:\n' + '-'*s.SUBHEADER_LEN +
-          f'\n  - Training: {train_med_score:.3f}' +
-          f'\n  - Testing: {test_med_score:.3f}')
+          f'\n  - Testing: {accuracy:.2f}')
     
     # Confusion Matrix                
     print('\n' + '\nConfusion Matrix:\n' + '-'*s.SUBHEADER_LEN + 
@@ -69,12 +92,13 @@ def print_results(train_score, test_score, train_med_score, test_med_score,
     
     # F1               
     print('\n'*2 + 'F1:\n' + '-'*s.SUBHEADER_LEN +
-          f'\n  - F1: {f1:.2f}' +
-          f'\n  - F1 (median filtered): {f1_med:.2f}')
+          f'\n  - F1: {f1:.2f}')
     
     # ROC AUC
     print('\n'*2 + 'ROC Curve:\n' + '-'*s.SUBHEADER_LEN +
-          f'\n  - ROC AUC: {roc_auc:.2f}' +
-          f'\n  - ROC AUC (median filtered): {medfilt_roc_auc:.2f}')
+          f'\n  - ROC AUC: {roc_auc:.2f}')
+    
+    # Plot ROC curve
+    roc.plot_roc(fpr, tpr, roc_auc)
     
     

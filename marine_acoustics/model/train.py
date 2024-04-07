@@ -21,12 +21,13 @@ from marine_acoustics.model import train_utils
 def train_classifier():
     """Train the model used for classification.."""
     
-    print('  - Training model...', end='')
+    print('\n\n' + '-'*s.HEADER_LEN +
+          f'\nTraining model {s.MODEL}-{s.FEATURES}...', end='')
     start = time.time()
     
     # Load training set
-    X_train = np.load(s.SAVE_DATA_FILEPATH + '/X_train.npy')
-    y_train = np.load(s.SAVE_DATA_FILEPATH + '/y_train.npy')
+    X_train = np.load(s.SAVE_DATA_FILEPATH + 'X_train.npy')
+    y_train = np.load(s.SAVE_DATA_FILEPATH + 'y_train.npy')
     
     # Select model
     if s.MODEL == 'HGB':
@@ -39,7 +40,7 @@ def train_classifier():
         raise NotImplementedError('Model chosen not implemented: ', s.MODEL)
     
     end = time.time()
-    print(f'100% ({end-start:.1f} s)')
+    print(f'100% ({end-start:.1f} s)\n' + '-'*s.HEADER_LEN)
    
     return model
 
@@ -52,7 +53,7 @@ def train_grad_boost(X_train, y_train):
                                            early_stopping=True).fit(X_train,
                                                                     y_train)
     
-    dump(model, s.SAVE_MODEL_FILEPATH + '/HGB')
+    dump(model, s.SAVE_MODEL_FILEPATH + s.MODEL + '-' + s.FEATURES)
     
     return model
     
@@ -93,10 +94,11 @@ def train_cnn(X_train, y_train):
         epoch_loss.append(acc_loss / len(loader))
         
     # Plot training loss per epoch
-    train_utils.plot_training_loss(epoch_loss)
+    #train_utils.plot_training_loss(epoch_loss)
     
     # Save model
-    torch.save(model.state_dict(), s.SAVE_MODEL_FILEPATH + '/CNN')
+    torch.save(model.state_dict(),
+               s.SAVE_MODEL_FILEPATH + s.MODEL + '-' + s.FEATURES)
 
     return model
     

@@ -11,7 +11,8 @@ from marine_acoustics.configuration import settings as s
 
 def plot_spectrogram(y, n_fft=s.N_FFT, hop_length=s.STFT_HOP,
                      win_length=s.STFT_LEN, ylim=[s.FMIN, s.FMAX],
-                     colorbar=True):
+                     colorbar=True,title='Linear-frequency Power Spectrogram',
+                     ax=None):
     """
     Plot the linear-frequency power spectrogram.
     
@@ -29,8 +30,9 @@ def plot_spectrogram(y, n_fft=s.N_FFT, hop_length=s.STFT_HOP,
     
     # Plot
     librosa.display.specshow(S_db, sr=s.SR, hop_length=hop_length,
-                             x_axis='s', y_axis='linear')
-    plt.title('Linear-frequency Power Spectrogram')
+                             x_axis='s', y_axis='linear', ax=ax,
+                             rasterized=False)
+    plt.title(title)
     plt.xlabel('Time (s)')
     plt.ylabel('Frequency (Hz)')
     plt.ylim(ylim)
