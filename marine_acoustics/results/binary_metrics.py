@@ -1,5 +1,5 @@
 """
-Calculate model performance metrics.
+Calculate model performance metrics for binary classification.
 
 """
 
@@ -8,6 +8,30 @@ import numpy as np
 from scipy.signal import medfilt
 from sklearn.metrics import (accuracy_score, auc, confusion_matrix, f1_score)                     
 from marine_acoustics.configuration import settings as s
+
+
+def get_metrics(y_test, y_proba, y_pred):
+    """Return a dictionary containing a selection of evaluation metrics."""
+    
+    metrics_dict = {}
+    
+    # Accuracy
+    metrics_dict['accuracy'] = get_accuracy(y_test, y_pred)
+    
+    # Confusion matrix
+    metrics_dict['c_matrix'] = calculate_confusion_matrix(y_test, y_pred)
+    
+    # F1
+    metrics_dict['f1'] = calculate_f1(y_test, y_pred)
+    
+    # ROC curve
+    fpr, tpr, thresholds = compute_medfilt_roc(y_test, y_proba)
+    metrics_dict.update({'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
+    
+    # ROC AUC
+    metrics_dict['roc_auc'] = calculate_roc_auc(fpr, tpr)
+    
+    return metrics_dict
 
 
 def get_accuracy(y_test, y_pred):

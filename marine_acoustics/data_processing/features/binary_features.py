@@ -9,7 +9,7 @@ import pywt
 import numpy as np
 from scipy.stats import describe
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.data_processing import feature_utils as utils
+from marine_acoustics.data_processing.features import feature_utils as utils
 
 
 def extract_features(y):
@@ -105,11 +105,11 @@ def calculate_mfccs(y):
                                  fmax=s.FMAX).T
    
     mfcc_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH, order=1,
-                                        axis=1, mode='interp')
+                                        axis=0, mode='interp')
     
     
     mfcc_delta_deltas = librosa.feature.delta(mfccs, width=s.DELTA_WIDTH,
-                                              order=2, axis=1, mode='interp')
+                                              order=2, axis=0, mode='interp')
 
     mfcc_features = np.hstack((mfccs, mfcc_deltas, mfcc_delta_deltas))
     

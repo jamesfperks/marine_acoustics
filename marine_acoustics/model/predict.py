@@ -9,8 +9,9 @@ Return predictions = (y_train_pred_proba, y_test_pred_proba)
 
 import torch
 import numpy as np
+import torch.nn.functional as F
 from joblib import load
-from marine_acoustics.model.cnn import LeNet
+from marine_acoustics.model import cnn
 from marine_acoustics.configuration import settings as s
 
 
@@ -48,8 +49,15 @@ def pred_grad_boost(X_test):
     # Load model
     model = load(s.SAVE_MODEL_FILEPATH + s.MODEL + '-' + s.FEATURES)
     
-    # Class probabilities (for positive class "whale")
-    y_test_pred_proba = model.predict_proba(X_test)[:,1]
+    if s.BINARY == True:
+        
+        # Binary: get probability for +ve class "whale" only (n_samples,)
+        y_test_pred_proba = model.predict_proba(X_test)[:,1]
+    
+    else:
+        
+        # Multiclass: probabilities for each class (n_samples x n_classes)
+        y_test_pred_proba = model.predict_proba(X_test)
     
     return y_test_pred_proba
 
@@ -65,7 +73,12 @@ def pred_cnn(X_test):
     X_test = torch.from_numpy(X_test)
     
     # Load model
-    model = LeNet()
+    if s.BINARY == True:
+        model = cnn.BinaryNet()
+        
+    else:
+        model = cnn.MultiNet()   
+    
     model.load_state_dict(torch.load(s.SAVE_MODEL_FILEPATH +
                                      s.MODEL + '-' + s.FEATURES))
     
@@ -81,6 +94,9 @@ def pred_cnn(X_test):
             predictions.append(batch_pred)
 
     predictions = np.concatenate(predictions)
+    
+    if s.BINARY == False:
+        predictions = F.softmax(torch.from_numpy(predictions), dim=1)
     
     return predictions
 

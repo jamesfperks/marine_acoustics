@@ -18,29 +18,41 @@ SAVE_MODEL_FILEPATH = 'logs/models/demo/'
 SEED = 12345         # Set random seed
 
 
+# CLASSIFICATION TYPE
+# -----------------------------------------------------------------------------
+BINARY = False              # True : binary classification
+                            # False: multiclass classification
+                           
+
 # TRAIN AND TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_SITES = [1]      # Sites for training (E.g. [1,4])
+TRAIN_SITES = [4,5]          # Sites for training (E.g. [1,4])
+                                          # [1,2,4,5,6,8,9,10]
  
-TEST_SITES = [2]                    # Sites for testing.
-                                 
-TRAIN_CALL_TYPES = [3]        # Call types for training
+TEST_SITES = [7]               # Sites for testing.
+                          
+
+# CALL TYPE SELECTION
+# -----------------------------------------------------------------------------
+TRAIN_CALL_TYPES = [1,2,3]    # Call types for training
 
 TEST_CALL_TYPES = []          # Call types for testing
                               # [] defaults to same call type as trained on.
+                              # BINARY = False also defaults to same call type
+                              # as trained on.
 
-IS_TEST_BALANCED = True       # Balance the positive and negative class
-                              # in the test set (True/False)
+IS_TEST_BALANCED = True       # Balance the classes in the test set
+                              # (True/False)
 
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'HGB'        # [HGB, CNN]
+MODEL = 'CNN'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'DFT'
+FEATURES = 'STFT'
 
 # 1D [DFT, MEL, MFCC, CWT_AVG, STFT_STATS, CWT_STATS]
 # 2D [STFT, CWT]
@@ -48,11 +60,11 @@ FEATURES = 'DFT'
 
 # FRAME DURATION AND OVERLAP
 # -----------------------------------------------------------------------------
-FRAME_DURATION = 3000    # Frame duration in milliseconds
+FRAME_DURATION = 18000    # Frame duration in milliseconds
 FRAME_ADVANCE = 1000     # Frame advance in milliseconds
 
 STFT_DURATION = 2048     # STFT window duration 
-STFT_ADVANCE = 100       # STFT window advance in milliseconds
+STFT_ADVANCE = 600       # STFT window advance in milliseconds
 
 
 # FREQUENCY RANGE

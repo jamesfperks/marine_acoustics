@@ -8,7 +8,7 @@ import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.data_processing import feature_utils
+from marine_acoustics.data_processing.features import feature_utils
 
 
 def plot_scalogram(y, wavelet=s.WAVELET, ylim=[s.FMIN, s.FMAX],

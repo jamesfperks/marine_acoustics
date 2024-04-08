@@ -52,8 +52,9 @@ def select_test_set():
     train_call_types = [i-1 for i in s.TRAIN_CALL_TYPES]
     test_call_types = [i-1 for i in s.TEST_CALL_TYPES]
 
-    # Default to using training call types if unspecified []
-    if len(test_call_types) == 0:
+    # Default to using training call types if TEST_CALL_TYPES is []
+    # or if BINARY = False (multiclass classification)
+    if (len(test_call_types) == 0) or (s.BINARY == False):
         test_call_types = train_call_types
         
     # Get total annotation summary

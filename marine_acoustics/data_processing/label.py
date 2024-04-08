@@ -86,26 +86,26 @@ def apply_labels(y_features, frame_indexes):
         feature_labels[annotated_indexes] = section_labels
 
     return feature_labels
-    
+
 
 def get_multi_class_labels(logs):
     """
     Return numberic labels for each call type annotaions in the given logs.
     
-    1  Bm-A
-    2  Bm-B
-    3  Bm-Z
-    4  Bm-D
-    5  Bp-20
-    6  Bp-20+
-    7  Bp-Downsweep
-    8  Unidentified
+    0  Bm-A
+    1  Bm-B
+    2  Bm-Z
+    3  Bm-D
+    4  Bp-20
+    5  Bp-20+
+    6  Bp-Downsweep
+    7  Unidentified
     
     """
     
     # Dict to convert call string to numeric call label
     call_type_strings = info.get_call_types()
-    call_type_nums = list(range(1,len(call_type_strings)+1))
+    call_type_nums = list(range(0,len(call_type_strings)))
     class_label_dict = dict(zip(call_type_strings, call_type_nums))
     
     # Convert labels in logs to numeric labels
@@ -114,4 +114,3 @@ def get_multi_class_labels(logs):
     
     return multi_class_labels
 
-    

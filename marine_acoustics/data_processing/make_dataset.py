@@ -52,7 +52,6 @@ def get_test_samples():
     np.save(s.SAVE_DATA_FILEPATH + 'X_test.npy', X_test)
     np.save(s.SAVE_DATA_FILEPATH + 'y_test.npy', y_test)
     
-    
     end = time.time()
     print(f'100% ({end-start:.1f} s)\n')
     

@@ -7,27 +7,20 @@ Evaluate the model performance.
 import numpy as np
 from scipy.signal import medfilt
 from marine_acoustics.configuration import settings as s
-from marine_acoustics.results import metrics
+from marine_acoustics.results import binary_metrics, multiclass_metrics
 from marine_acoustics.visualisation import roc
 
 
 def get_results():
     """Calculate and print classification scoring metrics."""
-        
+     
     # Load probabilities and ground truth labels
     y_test, y_proba = load_predictions()
-    
-    # Convert to binary predictions
-    y_pred = (y_proba >= 0.5).astype(int)
-    
-    # Apply median filter
-    y_pred = medfilt(y_pred, kernel_size=s.MEDIAN_FILTER_SIZE)
-    
-    # Calculate metrics
-    metrics_dict = get_metrics(y_test, y_proba, y_pred)
-    
-    # Print results
-    print_results(metrics_dict)
+
+    if s.BINARY == True:
+        get_binary_class_results(y_test, y_proba)
+    else:
+        get_multi_class_results(y_test, y_proba)
 
 
 def load_predictions():
@@ -40,34 +33,39 @@ def load_predictions():
     y_proba = np.load(s.SAVE_PREDICTIONS_FILEPATH + s.MODEL + '-' +
                            s.FEATURES + '-y-proba.npy')
     
-    return y_test, y_proba
+    return y_test, y_proba    
 
 
-def get_metrics(y_test, y_proba, y_pred):
-    """Return a dictionary containing a selection of evaluation metrics."""
+def get_binary_class_results(y_test, y_proba):
+    """Get metrics for binary classification."""
     
-    metrics_dict = {}
+    # Convert to binary predictions
+    y_pred = (y_proba >= 0.5).astype(int)
     
-    # Accuracy
-    metrics_dict['accuracy'] = metrics.get_accuracy(y_test, y_pred)
+    # Apply median filter
+    y_pred = medfilt(y_pred, kernel_size=s.MEDIAN_FILTER_SIZE)
     
-    # Confusion matrix
-    metrics_dict['c_matrix'] = metrics.calculate_confusion_matrix(y_test, y_pred)
+    # Calculate metrics
+    metrics_dict = binary_metrics.get_metrics(y_test, y_proba, y_pred)
     
-    # F1
-    metrics_dict['f1'] = metrics.calculate_f1(y_test, y_pred)
+    # Print results
+    print_binary_class_results(metrics_dict)
     
-    # ROC curve
-    fpr, tpr, thresholds = metrics.compute_medfilt_roc(y_test, y_proba)
-    metrics_dict.update({'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
-    
-    # ROC AUC
-    metrics_dict['roc_auc'] = metrics.calculate_roc_auc(fpr, tpr)
-    
-    return metrics_dict
 
+def get_multi_class_results(y_test, y_proba):
+    """Get metrics for multiclass classification."""
+    
+    # Convert probabilities to a class label
+    y_pred = np.argmax(y_proba, axis=1)
+    
+    # Calculate metrics
+    metrics_dict = multiclass_metrics.get_metrics(y_test, y_proba, y_pred)
+    
+    # Print results
+    print_multi_class_results(metrics_dict)
+    
 
-def print_results(metrics_dict):
+def print_binary_class_results(metrics_dict):
     """Print classification scoring metrics."""
     
     accuracy = metrics_dict['accuracy']
@@ -100,5 +98,32 @@ def print_results(metrics_dict):
     
     # Plot ROC curve
     roc.plot_roc(fpr, tpr, roc_auc)
+    
+
+def print_multi_class_results(metrics_dict):
+    """Print classification scoring metrics."""
+    
+    accuracy = metrics_dict['accuracy']
+    c_matrix = metrics_dict['c_matrix']
+    f1 = metrics_dict['f1']
+    roc_auc = metrics_dict['roc_auc']
+
+    
+    # Results Header
+    print('\n' + '-'*s.HEADER_LEN + '\nRESULTS\n' + '-'*s.HEADER_LEN)
+    
+    # Accuracy
+    print(f'\n  - Accuracy: {accuracy:.2f}')
+    
+    # F1               
+    print(f'\n  - F1: {f1:.2f}')
+    
+    # ROC AUC
+    print(f'\n  - ROC AUC: {roc_auc:.2f}')
+    
+    # Confusion Matrix                
+    print('\n' + '\nConfusion Matrix:\n' + '-'*s.SUBHEADER_LEN + 
+          f'\n{c_matrix}')
+    
     
     
