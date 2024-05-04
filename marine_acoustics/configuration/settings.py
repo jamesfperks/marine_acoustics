@@ -20,13 +20,13 @@ SEED = 12345         # Set random seed
 
 # CLASSIFICATION TYPE
 # -----------------------------------------------------------------------------
-BINARY = False              # True : binary classification
+BINARY = True              # True : binary classification
                             # False: multiclass classification
                            
 
 # TRAIN AND TEST SET SELECTION
 # -----------------------------------------------------------------------------
-TRAIN_SITES = [4,5]          # Sites for training (E.g. [1,4])
+TRAIN_SITES = [1,2,4,5,6,9,10]          # Sites for training (E.g. [1,4])
                                           # [1,2,4,5,6,8,9,10]
  
 TEST_SITES = [7]               # Sites for testing.
@@ -41,18 +41,18 @@ TEST_CALL_TYPES = []          # Call types for testing
                               # BINARY = False also defaults to same call type
                               # as trained on.
 
-IS_TEST_BALANCED = True       # Balance the classes in the test set
+IS_TEST_BALANCED = False       # Balance the classes in the test set
                               # (True/False)
 
 
 # MODEL
 # -----------------------------------------------------------------------------
-MODEL = 'CNN'        # [HGB, CNN]
+MODEL = 'HGB'        # [HGB, CNN]
 
 
 # FEATURE EXTRACTION METHOD
 # -----------------------------------------------------------------------------
-FEATURES = 'STFT'
+FEATURES = 'MFCC'
 
 # 1D [DFT, MEL, MFCC, CWT_AVG, STFT_STATS, CWT_STATS]
 # 2D [STFT, CWT]
@@ -60,11 +60,11 @@ FEATURES = 'STFT'
 
 # FRAME DURATION AND OVERLAP
 # -----------------------------------------------------------------------------
-FRAME_DURATION = 18000    # Frame duration in milliseconds
+FRAME_DURATION = 3000    # Frame duration in milliseconds
 FRAME_ADVANCE = 1000     # Frame advance in milliseconds
 
 STFT_DURATION = 2048     # STFT window duration 
-STFT_ADVANCE = 600       # STFT window advance in milliseconds
+STFT_ADVANCE = 100       # STFT window advance in milliseconds
 
 
 # FREQUENCY RANGE
@@ -98,7 +98,7 @@ Examples of good wavelet choices:
 
 # CNN CONSTANTS
 # -----------------------------------------------------------------------------
-N_EPOCHS = 10
+N_EPOCHS = 10     # originally 10
 BATCH_SIZE = 16
 LR = 0.01
 MOMENTUM = 0.5
@@ -107,7 +107,15 @@ PRED_BATCH_SIZE = 1000
 
 # EVALUATION CONSTANTS
 # -----------------------------------------------------------------------------
-MEDIAN_FILTER_SIZE = 3    # Size of 1D median filter kernel
+MEDIAN_FILTER_SIZE = 5    # Size of 1D median filter kernel
+
+
+# PIPELINE CONSTANTS
+# -----------------------------------------------------------------------------
+D = 13                    # duration of automated detections (s)
+MIN_CONSEC = 3            # min consecutive positive frames for detection
+
+
 
 
 # PRINTOUT CONSTANTS

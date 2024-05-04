@@ -104,34 +104,25 @@ def compute_medfilt_roc(y_true, y_proba, drop_intermediate=True):
     return fpr, tpr, thresholds
 
     
-def positives_per_threshold(y_true, y_proba):
-    """Calculate true and false positives per binary classification threshold.
-    
-    Function adapted from sklearn implementation to include median filtering.
-    """
-    
-    # ----------- sklearn code to get thresholds
-    
-    # sort scores and corresponding truth values
-    desc_score_indices = np.argsort(y_proba, kind="mergesort")[::-1]
-    y_proba = y_proba[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    
+def positives_per_threshold(y_true, y_score, pos_label=1):
+    """Calculate true and false positives per threshold."""
+
+    # sort scores in descending order
+    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    y_desc_score = y_score[desc_score_indices]
+ 
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_proba))[0]
+    distinct_value_indices = np.where(np.diff(y_desc_score))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
-    thresholds = y_proba[threshold_idxs]
-    
-    # ----------- end of sklearn code
-    
-    # Custom code to calculate fpr, tpr using median filtering
+    thresholds = y_desc_score[threshold_idxs]
+
     tps = np.zeros(thresholds.size)
     fps = np.zeros(thresholds.size)
     
     for i in range(thresholds.size):
-      y_pred = np.where(y_proba >= thresholds[i], 1, 0)
+      y_pred = np.where(y_score >= thresholds[i], 1, 0)
       y_medfilt_pred = medfilt(y_pred, kernel_size=s.MEDIAN_FILTER_SIZE)
 
       tps[i] = np.sum((y_medfilt_pred == 1) & (y_true == 1))

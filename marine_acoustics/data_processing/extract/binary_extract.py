@@ -3,6 +3,7 @@ Extract samples for binary classification from .wav files.
 """
 
 
+import matplotlib.pyplot as plt
 import random
 import numpy as np
 from marine_acoustics.configuration import settings as s
@@ -22,6 +23,7 @@ def extract_samples(site, gb_wavfile, df_folder_structure, is_train):
         # Frame and extract features
         y_features = binary_features.extract_features(y)
         
+
         # Label features
         y_labelled_features = label.label_features(y_features,
                                                    logs,

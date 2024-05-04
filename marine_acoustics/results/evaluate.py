@@ -71,9 +71,9 @@ def print_binary_class_results(metrics_dict):
     accuracy = metrics_dict['accuracy']
     c_matrix = metrics_dict['c_matrix']
     f1 = metrics_dict['f1']
-    fpr = metrics_dict['fpr']
-    tpr = metrics_dict['tpr']
-    roc_auc = metrics_dict['roc_auc']
+    #fpr = metrics_dict['fpr']
+    #tpr = metrics_dict['tpr']
+    #roc_auc = metrics_dict['roc_auc']
 
     
     # Results Header

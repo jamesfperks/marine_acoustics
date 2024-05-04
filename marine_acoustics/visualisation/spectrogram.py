@@ -30,8 +30,7 @@ def plot_spectrogram(y, n_fft=s.N_FFT, hop_length=s.STFT_HOP,
     
     # Plot
     librosa.display.specshow(S_db, sr=s.SR, hop_length=hop_length,
-                             x_axis='s', y_axis='linear', ax=ax,
-                             rasterized=False)
+                             x_axis='s', y_axis='linear', ax=ax)
     plt.title(title)
     plt.xlabel('Time (s)')
     plt.ylabel('Frequency (Hz)')
